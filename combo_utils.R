@@ -116,3 +116,32 @@ add_dprime <- function(diff_exprs) {
     }
     return(diff_exprs)
 }
+
+#-----------------
+
+combine_cmap_pairs <- function(pairs, data, inds) {
+
+  #returns matrix with data from CMAP pairs
+  #used by xgboost model to predict drug combos
+
+    combo_data <- list()
+    for (i in seq_along(pairs)) {
+
+        dr1 <- pairs[[i]][1]
+        dr2 <- pairs[[i]][2]
+
+        dr1_data <- data[, inds[1, dr1]:inds[2, dr1]]
+        dr2_data <- data[, inds[1, dr2]:inds[2, dr2]]
+
+        colnames(dr1_data) <- gsub("^.+_", "drug1_", colnames(dr1_data))
+        colnames(dr2_data) <- gsub("^.+_", "drug2_", colnames(dr2_data))
+
+        cbo_data <- cbind(dr1_data, dr2_data)
+
+        combo_data[[i]] <- cbo_data
+    }
+    combo_data <- rbindlist(combo_data)
+    combo_data <- as.matrix(combo_data)
+
+    return (combo_data)
+}

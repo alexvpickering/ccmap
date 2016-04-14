@@ -23,6 +23,7 @@ get_top_drugs <- function(query_genes, query_n=length(query_genes), drug_info=NU
   overlap <- get_overlap(drug_genes, query_genes)
 
   #get cross overlap (drug acts opposite to query)
+  #SHOULD BE ABLE TO REMOVE AS CROSS IS DEFINED BY OVERLAP
   cross_genes <- list(up=query_genes$dn, dn=query_genes$up)
   cross_overlap <- get_overlap(drug_genes, cross_genes)
 
@@ -348,6 +349,22 @@ plot_ma_res <- function (ma_res) {
     scale_x_continuous(breaks = seq(1, 13, 1), limits=c(1, 13))
 
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 #---------------------
 
