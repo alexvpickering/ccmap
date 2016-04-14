@@ -371,7 +371,7 @@ get_combo <- function(drug_info, query_genes, query_n=length(query_genes), drug_
   #load model & cmap data
   mod1 <- readRDS("~/Documents/Batcave/GEO/2-cmap/data/combos/mod1.rds")
   mod2 <- readRDS("~/Documents/Batcave/GEO/2-cmap/data/combos/mod2.rds")
-  cmap_data <- readRDS("~/Documents/Batcave/GEO/2-cmap/data/processed/es/probes_top_tables.rds")
+  cmap <- readRDS("~/Documents/Batcave/GEO/2-cmap/data/processed/es/probes_top_tables.rds")
 
 
   #start combo table with top drug

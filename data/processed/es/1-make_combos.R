@@ -1,43 +1,39 @@
-#----------
-# APPROACH
-#----------
+library(RSQLite)
+library(randomForestSRC)
 
-# have t-statistic (log2FC/SD) - - > assume additive at FC level
-#
-#
-#               | control   |   drug-1    |   drug-2   |   drug-1 + drug-2 (additive model)
-#----------------------------------------------------------------------------------
-# abs (FC)      |   10      |   20 (2x)    |   20 (2x)   |       40 (4x)    
-# log2FC        |   N/A     |   1          |   1         |       2
+setwd("/home/alex/Documents/Batcave/GEO/2-cmap/data/processed/es")
 
+#---------
 
 #-------
 # SETUP
 #-------
 
-library(RSQLite)
-library(data.table)
-
-setwd("/home/alex/Documents/Batcave/GEO/2-cmap/data/processed/es")
-
 
 #load model & cmap data
-mod1   <- readRDS("~/Documents/Batcave/GEO/2-cmap/data/combos/mod1.rds")
-mod2   <- readRDS("~/Documents/Batcave/GEO/2-cmap/data/combos/mod2.rds")
-cmap   <- readRDS("~/Documents/Batcave/GEO/2-cmap/data/processed/es/probes_top_tables.rds")
-drugs  <- cmap$drugs
-probes <- mod1$order
+mod1        <- readRDS("~/Documents/Batcave/GEO/2-cmap/data/combos/mod1.rds")
+mod2        <- readRDS("~/Documents/Batcave/GEO/2-cmap/data/combos/mod2.rds")
+cmap_probes <- readRDS("~/Documents/Batcave/GEO/2-cmap/data/processed/es/probes_top_tables.rds")
+cmap_array  <- readRDS("~/Documents/Batcave/GEO/2-cmap/data/combos/cmap_array.rds")
+probes      <- mod1$probes
+drugs       <- cmap_probes$drugs
 
-probes_data <- cmap$data[probes, ]
-array_data  <- readRDS("~/Documents/Batcave/GEO/2-cmap/data/combos/cmap_array.rds")
+
+#probes_data <- cmap_probes$data[probes, ]
+
+#indices for probes_data
+drug_inds <- sapply(seq_along(drugs), function(x) c(x*7-6, x*7))
+colnames(drug_inds) <- drugs
 
 #make blank table in SQLite database
 db.pdc <- dbConnect(SQLite(), dbname="genes_drug_combos.sqlite")
 cols <- paste(shQuote(probes), "FLOAT", collapse=", ")
+
 statement <- paste("CREATE TABLE combo_preds",
                    "(drug_combo TEXT, ", cols, ")", sep="")
 
 dbSendQuery(db.pdc, statement)
+
 
 #get list of unique drug combos
 combo_pairs <- combn(drugs, 2, simplify=F)
@@ -52,25 +48,32 @@ saveRDS(combo_names, "combo_names.rds")
 #-----------------------
 # 856086 combos = 1309 * 654
 
-combine_arrays <- function(combos, array_data) {
+combine_arrays <- function(combos, cmap_array) {
 	
-	drug1s <- sapply(combos, function(x) x[[1]])
-	drug2s <- sapply(combos, function(x) x[[2]])
+	drugs1 <- sapply(combos, function(x) x[[1]])
+	drugs2 <- sapply(combos, function(x) x[[2]])
+
+  data <- cmap_array$data
+  cols <- cmap_array$col_names
 
 	#bind drug1 and drug2 data by columns
-	drug12s <- list()
+	drugs12 <- list()
 	for (i in seq_along(combos)) {
-		drug1 <- drug1s[i]
-		drug2 <- drug2s[i]
 
-		drug12s[[i]] <- cbind(array_data[[drug1]], array_data[[drug2]])
+    drug1_data <- data[[drugs1[i]]]
+    drug2_data <- data[[drugs2[i]]]
+
+		drugs12[[i]] <- c(drug1_data, drug2_data)
 	}
 
 	#bind drug12s data by rows
-	return(rbindlist(drug12s))
+  drugs12 <- t(as.data.frame(drugs12))
+
+  row.names(drugs12) <- names(combos)
+  colnames(drugs12)  <- cols
+
+  return(as.data.frame(drugs12))
 }
-
-
 
 
 
@@ -79,12 +82,14 @@ combine_arrays <- function(combos, array_data) {
 for (i in 1:1309) {
 
 	#get array data for 654 combos
-	combos <- combo_pairs[(i*654-653):(i*654)]
-	combos_data <- combine_arrays(combos, array_data)
-	row.names(combos_data) <- names(combos)
+  combos <- combo_pairs[(i*654-653):(i*654)]
+	combos_data <- combine_arrays(combos, cmap_array)
 
 	#make predictions with mod1
+  start <- Sys.time()
 	preds1 <- predict.rfsrc(mod1$model, combos_data)
+  end <- Sys.time()
+  end-start
 
 	#get probe data for 654 combos
 
