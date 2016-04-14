@@ -2,6 +2,7 @@ library(apcluster)
 library(reshape2)
 library(ggplot2)
 library(dplyr)
+library(randomForestSRC)
 library(xgboost)
 
 
@@ -368,7 +369,8 @@ get_combo <- function(drug_info, query_genes, query_n=length(query_genes), drug_
   #--------
 
   #load model & cmap data
-  model <- readRDS("~/Documents/Batcave/GEO/2-cmap/data/combos/model_simple.rds")
+  mod1 <- readRDS("~/Documents/Batcave/GEO/2-cmap/data/combos/mod1.rds")
+  mod2 <- readRDS("~/Documents/Batcave/GEO/2-cmap/data/combos/mod2.rds")
   cmap_data <- readRDS("~/Documents/Batcave/GEO/2-cmap/data/processed/es/probes_top_tables.rds")
 
 
@@ -399,6 +401,12 @@ get_combo <- function(drug_info, query_genes, query_n=length(query_genes), drug_
     #get cmap probe data for drug2
     drug2_data <- cmap_data[, grepl(drug2, colnames(cmap_data))]
     colnames(drug2_data) <- gsub(drug2, "drug2", colnames(drug2_data))
+
+    #get mod1 preds
+    combo_data1 <- by_array(top_data[mod1$order, ], drug2_data[mod1$order, ])
+    preds1 <- predict.rfsrc(mod1$model, combo_data1)
+
+
 
     #bind top and drug2 then get preds for combo
     combo_data <- cbind(top_data, drug2_data)

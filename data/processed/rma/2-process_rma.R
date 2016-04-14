@@ -144,7 +144,8 @@ for (i in seq_along(drugs)) {
   top_tables <- cbind(top_tables, top_table[featureNames(eset),])
 }
 
-saveRDS(top_tables, "~/Documents/Batcave/GEO/2-cmap/data/processed/es/probes_top_tables.rds")
+tops <- list(data=top_tables, drugs=drugs)
+saveRDS(tops, "~/Documents/Batcave/GEO/2-cmap/data/processed/es/probes_top_tables.rds")
 
 
 #collect dprime values (effect size) from each contrast
@@ -154,11 +155,6 @@ colnames(es_probes) <- gsub("_dprime", "", colnames(es_probes))
 
 saveRDS(as.matrix(es_probes), 
         "~/Documents/Batcave/GEO/2-cmap/data/processed/es/probes_drug_es.rds")
-
-#get probe-probe correlations
-cor_probes <- cor(t(es_probes), method="spearman")
-saveRDS(cor_probes, 
-        "~/Documents/Batcave/GEO/2-cmap/data/processed/es/probes_cor.rds")
 
 
 #-----------

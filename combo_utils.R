@@ -12,8 +12,11 @@ setup_combo_data <- function(diff_exprs, prev_selections=NULL, by="array") {
     #combine
     data <- combine_combo_data(diff_exprs, selections, by)
 
+    #save probe order
+    order <- featureNames(diff_exprs[[1]]$eset)
+
     #return result
-    combo_data <- list(data=data, selections=selections)
+    combo_data <- list(data=data, selections=selections, order=order)
     return(combo_data)
 }
 
@@ -88,22 +91,28 @@ combine_combo_data <- function(diff_exprs, selections, by="array"){
     return(data)
 }
 
-by_array <- function(drug1, drug2, combo, data){
+by_array <- function(drug1, drug2, combo=NULL, data=data.frame()) {
     #OUT: samples (rows) all probes for drug1, drug2, and combo
 
     #add probes column
     drug1$probe <- row.names(drug1)
     drug2$probe <- row.names(drug2)
-    combo$probe <- row.names(combo)
 
     #cast to single row
     drug1 <- dcast(melt(drug1, id.var="probe"), 1 ~ variable + probe)[, -1]
     drug2 <- dcast(melt(drug2, id.var="probe"), 1 ~ variable + probe)[, -1]
-    combo <- dcast(melt(combo, id.var="probe"), 1 ~ variable + probe)[, -1]
 
-    #put together and add to data
-    data <- rbind(data, cbind(drug1, drug2, combo))
 
+    if (!is.null(combo)) {
+
+        #same for combo data
+        combo$probe <- row.names(combo)
+        combo <- dcast(melt(combo, id.var="probe"), 1 ~ variable + probe)[, -1]
+
+        #put together and add to data
+        data <- rbind(data, cbind(drug1, drug2, combo))
+
+    } else data <- rbind(data, cbind(drug1, drug2))
     return(data)
 }
 
@@ -134,72 +143,3 @@ add_dprime <- function(diff_exprs) {
     }
     return(diff_exprs)
 }
-
-
-#------------------
-
-# add_top_cors <- function(combo_probe, probes_cor, n=1) {
-#   #adds info from top n most correlated probes
-
-#   #only consider probes in both combo_probe and probes_cor
-#   probes <- colnames(probes_cor)
-#   probes <- probes[probes %in% combo_probe$keys]
-#   probes_cor <- probes_cor[probes, probes]
-
-#   #identify top n correlating probes for each probe
-#   top_cors <- list()
-  
-#   for (probe in probes) {
-#     probe_cor <- sort(probes_cor[, probe], decreasing=T)
-#     top_cors[[probe]] <- probe_cor[2:(2+n-1)]
-#   }
-
-#   #add dprime, adj.P.Val, and correlation for drug1 and drug2
-#   for (i in 1:n) {
-
-#     #new column names(dprime, pval, and cor)
-#     dp1_name <- paste("drug1_", "cor", i, "_dprime", sep="")
-#     dp2_name <- paste("drug2_", "cor", i, "_dprime", sep="")
-
-#     p1_name <- paste("drug1_", "cor", i, "_adj.P.Val", sep="")
-#     p2_name <- paste("drug2_", "cor", i, "_adj.P.Val", sep="")
-
-#     c_name <- paste("cor", i, sep="")
-
-#     #prep
-#     probe_rows <- paste(rep(probes, each=80), c("", 1:79), sep="")
-#     dp1 <- c()
-#     dp2 <- c()
-#     p1  <- c()
-#     p2  <- c()
-#     c   <- c()
-
-#     for (probe in probes){
-
-#       #get probe (and corresponding rows) with top_i correlation
-#       pci <- top_cors[[probe]][i]
-#       pci_rows <- paste(names(pci), c("", 1:79), sep="")
-
-#       #get dprime of pci for drug1 and drug2
-#       dp1 <- c(dp1, combo_probe[pci_rows, drug1_dprime])
-#       dp2 <- c(dp2, combo_probe[pci_rows, drug2_dprime])
-
-#       #get adj.P.Val of pci for drug1 and drug2
-#       p1 <- c(p1, combo_probe[pci_rows, drug1_adj.P.Val])
-#       p2 <- c(p2, combo_probe[pci_rows, drug2_adj.P.Val])
-
-#       #add correlation value of pci to rows for probe
-#       c <- c(c, rep(pci, 80))
-#     }
-
-#     #add values to combo_probe
-#     combo_probe[probe_rows, eval(dp1_name)] <- dp1
-#     combo_probe[probe_rows, eval(dp2_name)] <- dp2
-
-#     combo_probe[probe_rows, eval(p1_name)] <- p1
-#     combo_probe[probe_rows, eval(p2_name)] <- p2
-
-#     combo_probe[probe_rows, eval(c_name)] <- c
-#   }
-#   return(combo_probe)
-# }
