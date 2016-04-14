@@ -1,7 +1,7 @@
 library(metaMA)
 library(reshape2)
 
-setup_combo_data <- function(diff_exprs, prev_selections=NULL, by="array") {
+setup_combo_data <- function(diff_exprs, prev_selections=NULL) {
 
     #add moderated effect sizes
     diff_exprs <- add_dprime(diff_exprs)
@@ -10,7 +10,7 @@ setup_combo_data <- function(diff_exprs, prev_selections=NULL, by="array") {
     selections <- select_combo_data(diff_exprs, prev_selections)
 
     #combine
-    data <- combine_combo_data(diff_exprs, selections, by)
+    data <- combine_combo_data(diff_exprs, selections)
 
     #save probe order
     order <- featureNames(diff_exprs[[1]]$eset)
@@ -59,7 +59,7 @@ select_combo_data <- function(diff_exprs, prev_selections){
 
 #---------------
 
-combine_combo_data <- function(diff_exprs, selections, by="array"){
+combine_combo_data <- function(diff_exprs, selections){
 
     #return value
     data <- data.frame()
@@ -83,36 +83,9 @@ combine_combo_data <- function(diff_exprs, selections, by="array"){
             colnames(drug2) <- paste("drug2", colnames(drug2), sep="_")
             colnames(combo) <- paste("combo", colnames(combo), sep="_")
 
-            if (by == "array") data <- by_array(drug1, drug2, combo, data)
-            if (by == "probe") data <- rbind(data, cbind(drug1, drug2, combo))
-
+            data <- rbind(data, cbind(drug1, drug2, combo))
         }
     }
-    return(data)
-}
-
-by_array <- function(drug1, drug2, combo=NULL, data=data.frame()) {
-    #OUT: samples (rows) all probes for drug1, drug2, and combo
-
-    #add probes column
-    drug1$probe <- row.names(drug1)
-    drug2$probe <- row.names(drug2)
-
-    #cast to single row
-    drug1 <- dcast(melt(drug1, id.var="probe"), 1 ~ variable + probe)[, -1]
-    drug2 <- dcast(melt(drug2, id.var="probe"), 1 ~ variable + probe)[, -1]
-
-
-    if (!is.null(combo)) {
-
-        #same for combo data
-        combo$probe <- row.names(combo)
-        combo <- dcast(melt(combo, id.var="probe"), 1 ~ variable + probe)[, -1]
-
-        #put together and add to data
-        data <- rbind(data, cbind(drug1, drug2, combo))
-
-    } else data <- rbind(data, cbind(drug1, drug2))
     return(data)
 }
 

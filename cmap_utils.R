@@ -369,9 +369,8 @@ get_combo <- function(drug_info, query_genes, query_n=length(query_genes), drug_
   #--------
 
   #load model & cmap data
-  mod1 <- readRDS("~/Documents/Batcave/GEO/2-cmap/data/combos/mod1.rds")
-  mod2 <- readRDS("~/Documents/Batcave/GEO/2-cmap/data/combos/mod2.rds")
-  cmap <- readRDS("~/Documents/Batcave/GEO/2-cmap/data/processed/es/probes_top_tables.rds")
+  model <- readRDS("~/Documents/Batcave/GEO/2-cmap/data/combos/model_simple.rds")
+  cmap_data <- readRDS("~/Documents/Batcave/GEO/2-cmap/data/processed/es/probes_top_tables.rds")
 
 
   #start combo table with top drug
@@ -385,7 +384,8 @@ get_combo <- function(drug_info, query_genes, query_n=length(query_genes), drug_
   other_drugs <- setdiff(drugs, top_drug)
 
   #get cmap probe data for top drug
-  top_data <- cmap_data[, grepl(top_drug, colnames(cmap_data))]
+  top_pat  <- paste("^", top_drug, "_", sep="")
+  top_data <- cmap_data[, grepl(top_pat, colnames(cmap_data))]
   colnames(top_data) <- gsub(top_drug, "drug1", colnames(top_data))
 
 
@@ -399,14 +399,9 @@ get_combo <- function(drug_info, query_genes, query_n=length(query_genes), drug_
   for (drug2 in other_drugs) {
 
     #get cmap probe data for drug2
-    drug2_data <- cmap_data[, grepl(drug2, colnames(cmap_data))]
+    drug2_pat  <- paste("^", drug2, "_", sep="")
+    drug2_data <- cmap_data[, grepl(drug2_pat, colnames(cmap_data))]
     colnames(drug2_data) <- gsub(drug2, "drug2", colnames(drug2_data))
-
-    #get mod1 preds
-    combo_data1 <- by_array(top_data[mod1$order, ], drug2_data[mod1$order, ])
-    preds1 <- predict.rfsrc(mod1$model, combo_data1)
-
-
 
     #bind top and drug2 then get preds for combo
     combo_data <- cbind(top_data, drug2_data)
@@ -458,5 +453,3 @@ get_combo <- function(drug_info, query_genes, query_n=length(query_genes), drug_
   combo_table <- rbind(combo_table, best_combo)
   return(combo_table)
 }
-
-
