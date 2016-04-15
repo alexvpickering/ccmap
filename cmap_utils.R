@@ -1,11 +1,10 @@
 library(apcluster)
 library(reshape2)
 library(ggplot2)
-library(dplyr)
-library(randomForestSRC)
+library(data.table)
 library(xgboost)
 
-
+source("~/Documents/Batcave/GEO/2-cmap/combo_utils.R")
 
 #---------------------
 
@@ -351,24 +350,10 @@ plot_ma_res <- function (ma_res) {
 }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 #---------------------
 
-get_combo <- function(drug_info, query_genes, query_n=length(query_genes), drug_genes_n=NULL) {
+get_top_combos <- function(query_genes, query_n=length(query_genes),
+                           drug_info=NULL, drug_genes_n=NULL) {
 
   #drug_info: ONLY drug_es (not drug_prls) 
 
@@ -386,87 +371,73 @@ get_combo <- function(drug_info, query_genes, query_n=length(query_genes), drug_
   #--------
 
   #load model & cmap data
-  model <- readRDS("~/Documents/Batcave/GEO/2-cmap/data/combos/model_simple.rds")
-  cmap_data <- readRDS("~/Documents/Batcave/GEO/2-cmap/data/processed/es/probes_top_tables.rds")
+  mod    <- readRDS("~/Documents/Batcave/GEO/2-cmap/data/combos/model.rds")
+  cmap   <- readRDS("~/Documents/Batcave/GEO/2-cmap/data/processed/es/probes_top_tables.rds")
+  data   <- cmap$data
+  drugs  <- cmap$drugs
+  probes <- row.names(data)
 
+  #indices for drugs
+  inds <- sapply(seq_along(drugs), function(x) c(x*7-6, x*7))
+  colnames(inds) <- drugs
 
   #start combo table with top drug
   combo_table <- get_top_drugs(query_genes, query_n, drug_info,
                                drug_genes_n=drug_genes_n, es=T)$table[1, ]
 
-  #drug and probe names
-  probes <- row.names(cmap_data)
-  drugs  <- colnames(drug_info)
   top_drug <- row.names(combo_table)
   other_drugs <- setdiff(drugs, top_drug)
 
-  #get cmap probe data for top drug
-  top_pat  <- paste("^", top_drug, "_", sep="")
-  top_data <- cmap_data[, grepl(top_pat, colnames(cmap_data))]
-  colnames(top_data) <- gsub(top_drug, "drug1", colnames(top_data))
+  #get combo data
+  pairs <- lapply(seq_along(other_drugs), function(x) c(top_drug, other_drugs[x]))
+  names(pairs) <- sapply(pairs, function(x) paste(x[1], x[2], sep=" + "))
+  combo_data <- combine_cmap_pairs(pairs, data, inds)
 
-
-  #--------------
-  # PROBE COMBOS
-  #--------------
-
-  #df for predicted probabilities of combos
-  probe_preds <- data.frame(row.names=probes)
-
-  for (drug2 in other_drugs) {
-
-    #get cmap probe data for drug2
-    drug2_pat  <- paste("^", drug2, "_", sep="")
-    drug2_data <- cmap_data[, grepl(drug2_pat, colnames(cmap_data))]
-    colnames(drug2_data) <- gsub(drug2, "drug2", colnames(drug2_data))
-
-    #bind top and drug2 then get preds for combo
-    combo_data <- cbind(top_data, drug2_data)
-    probe_preds[, drug2] <- predict(model, as.matrix(combo_data))
-  }
-
-  #-----------------
-  # PROBES to GENES
-  #-----------------
-
-  #annotate probe preds with SYMBOL
+  #load annotation information
   suppressMessages(library("hgu133a.db"))
   suppressMessages(map <- AnnotationDbi::select(hgu133a.db, probes, "SYMBOL"))
   map <- map[!is.na(map$SYMBOL),]
+  genes <- unique(map$SYMBOL)
 
+  #--------------
+  # PROBE PREDS
+  #--------------
+
+  #make predictions with mod
+  probe_preds <- predict(mod, combo_data) - 0.5
+
+  #probe_preds vector to df
+  dim(probe_preds) <- c(length(probes), length(pairs))
+  colnames(probe_preds)  <- names(pairs)
+  row.names(probe_preds) <- probes
+  probe_preds <- as.data.frame(probe_preds)
+
+
+  #-----------------
+  # PROBES TO GENES
+  #-----------------
+
+  #annotate probe probe_preds with SYMBOL
   probe_preds <- probe_preds[map$PROBEID, ]
   probe_preds$SYMBOL <- map$SYMBOL
 
-  #df for predicted probabilities of combos at gene level
-  gene_preds <- data.frame(row.names=unique(map$SYMBOL))
+  #where duplicated SYMBOL, choose probe with prediction furthest from 0.5
+  probe_preds <- data.table(probe_preds)
+  gene_preds  <- probe_preds[, lapply(.SD, function (col) col[which.max(abs(col))]), by='SYMBOL']
 
-  for (drug2 in other_drugs) {
-
-    #for duplicated genes, choose probability furthest from 0.5
-    combo_preds <- probe_preds[, c(drug2, "SYMBOL")]
-    colnames(combo_preds) <- c("pred", "SYMBOL")
-    combo_preds$dist <- combo_preds$pred - 0.5
-
-    combo_preds %>%
-      group_by(SYMBOL) %>%
-      arrange(desc(abs(dist))) %>%
-      dplyr::slice(1) %>%
-      ungroup() ->
-      combo_preds
-
-    #add to gene_preds
-    class(combo_preds) <- "data.frame"
-    gene_preds[combo_preds$SYMBOL, drug2] <- combo_preds$dist
-  }
+  #format table
+  gene_preds <- as.data.frame(gene_preds)
+  row.names(gene_preds) <- gene_preds$SYMBOL
+  gene_preds <- gene_preds[, colnames(gene_preds) != "SYMBOL"]
 
   #------------
   # BEST COMBO
   #------------
 
   #get best combo of top_drugs and other_drugs
-  best_combo <- get_top_drugs(query_genes, query_n, as.matrix(gene_preds),
-                              drug_genes_n=drug_genes_n, es=T)$table[1, ]
+  best_combos <- get_top_drugs(query_genes, query_n, drug_info=as.matrix(gene_preds),
+                               drug_genes_n=drug_genes_n, es=T)$table
 
-  combo_table <- rbind(combo_table, best_combo)
+  combo_table <- rbind(combo_table, best_combos)
   return(combo_table)
 }

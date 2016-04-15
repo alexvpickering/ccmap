@@ -1,7 +1,6 @@
 library(RSQLite)
 library(data.table)
 library(xgboost)
-library(dplyr)
 
 source("~/Documents/Batcave/GEO/2-cmap/combo_utils.R")
 setwd("~/Documents/Batcave/GEO/2-cmap/data/combos")
@@ -10,7 +9,6 @@ setwd("~/Documents/Batcave/GEO/2-cmap/data/combos")
 #-------
 # SETUP
 #-------
-
 
 #load model & cmap data
 mod    <- readRDS("model.rds")
@@ -44,20 +42,21 @@ statement <- paste("CREATE TABLE combo_preds",
 dbSendQuery(db.pdc, statement)
 
 
+pb  <- txtProgressBar(min=1, max=654, style=3)
 
 # 856086 combo_pairs = 1309 * 654
-for (i in 1:1309) {
+for (i in 1:654) {
 
     #-------------------
     # PROBE PREDICTIONS
     #-------------------
 
     #get array data for 654 combos
-    pairs <- combo_pairs[(i*654-653):(i*654)]
+    pairs <- combo_pairs[(i*1309-1308):(i*1309)]
     combo_data <- combine_cmap_pairs(pairs, data, inds)
 
     #make predictions with mod
-    probe_preds <- predict(mod, combo_data)
+    probe_preds <- predict(mod, combo_data) - 0.5
     
     #probe_preds vector to df
     dim(probe_preds) <- c(length(probes), length(pairs))
@@ -73,49 +72,30 @@ for (i in 1:1309) {
     probe_preds <- probe_preds[map$PROBEID, ]
     probe_preds$SYMBOL <- map$SYMBOL
 
+    #where duplicated SYMBOL, choose probe with prediction furthest from 0.5
     probe_preds <- data.table(probe_preds)
-    gene_preds <- probe_preds[, lapply(.SD, max), by=group]
+    gene_preds  <- probe_preds[, lapply(.SD, function (col) col[which.max(abs(col))]), by='SYMBOL']
 
-    start=Sys.time()
-    #df for predicted probabilities of combos at gene level
-    gene_preds <- data.frame(row.names=unique(map$SYMBOL))
-
-    for (combo in names(pairs)) {
-
-        #for duplicated genes, choose probability furthest from 0.5
-        combo_preds <- probe_preds[, c(combo, "SYMBOL")]
-        colnames(combo_preds) <- c("pred", "SYMBOL")
-        combo_preds$dist <- combo_preds$pred - 0.5
-
-        combo_preds %>%
-            group_by(SYMBOL) %>%
-            arrange(desc(abs(dist))) %>%
-            dplyr::slice(1) %>%
-            ungroup() ->
-            combo_preds
-
-        #add to gene_preds
-        class(combo_preds) <- "data.frame"
-        gene_preds[combo_preds$SYMBOL, combo] <- combo_preds$dist
-    }
-    end=Sys.time()
-    end-start
 
     #----------------
     # ADD TO SQL DB
     #----------------
 
     #format table
+    gene_preds <- as.data.frame(gene_preds)
+    row.names(gene_preds) <- gene_preds$SYMBOL
+    gene_preds <- gene_preds[, colnames(gene_preds) != "SYMBOL"]
+
     gene_preds <- as.data.frame(t(gene_preds))
     gene_preds$drug_combo <- row.names(gene_preds)
     row.names(gene_preds) <- NULL
 
-    dbWriteTable(db.pdc, "combo_preds", gene_preds, append = TRUE)
+    dbWriteTable(db.pdc, "combo_preds", gene_preds[, c("drug_combo", genes)], append = TRUE)
 
-    statement <- paste("INSERT INTO combo_tstats VALUES (", shQuote(combo_name), sep="")
-    statement <- paste(statement, ", ", combo_tstat, ")", sep="")
+    rm(gene_preds, probe_preds, pairs, combo_data)
+    gc()
 
-    dbSendQuery(conn = db.pdc, statement)
+    setTxtProgressBar(pb, i)
 }
 
 
