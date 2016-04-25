@@ -1,3 +1,43 @@
+#' Extract unbiased effect sizes from meta-analysis by ES.GeneMeta.
+#'
+#' Function extracts MUvals (overall mean effect size) and Effect_Ex (unbiased
+#' effect sizes from each contrast).
+#'
+#' Result used to query connectivity map drugs.
+#'
+#' @param es2 ES.GeneMeta.res object, result of of call to \code{ES.GeneMeta}
+#'
+#' @return List containing:
+#'   \item{meta}{Named numeric vector with overall mean effect size for each gene
+#'      from meta analysis.}
+#'   \item{contrasts}{List of named numeric vectors (one per contrast) with
+#'      unbiased effect sizes for each gene from meta analysis.}
+#' @export
+#'
+#' @seealso \link{\code{ES.GeneMeta}}.
+#' @examples
+get_dprimes <- function(es2) {
+
+    scores_table <- es2$theScores
+
+    meta <- scores_table[, "MUvals"]
+    contrasts <- list()
+
+    ex_cols <- grep("Effect_Ex_", colnames(scores_table))
+
+    for (col in ex_cols){
+
+        dprimes <- scores_table[, col]
+        col_name <- colnames(scores_table)[col]
+        contrasts[[col_name]] <- dprimes
+    }
+    return(list (meta=meta, contrasts=contrasts))
+}
+
+
+#---------------------
+
+
 #' Get overlap between query and drug signatures.
 #'
 #'
@@ -216,46 +256,6 @@ get_overlap <- function(drug_genes, query_genes, tan_sim=FALSE) {
 #---------------------
 
 
-#' Extract unbiased effect sizes from meta-analysis by ES.GeneMeta.
-#'
-#' Function extracts MUvals (overall mean effect size) and Effect_Ex (unbiased
-#' effect sizes from each contrast).
-#'
-#' Result used to query connectivity map drugs.
-#'
-#' @param es2 ES.GeneMeta.res object, result of of call to \code{ES.GeneMeta}
-#'
-#' @return List containing:
-#'   \item{meta}{Named numeric vector with overall mean effect size for each gene
-#'      from meta analysis.}
-#'   \item{contrasts}{List of named numeric vectors (one per contrast) with
-#'      unbiased effect sizes for each gene from meta analysis.}
-#' @export
-#'
-#' @seealso \link{\code{ES.GeneMeta}}.
-#' @examples
-get_dprimes <- function(es2) {
-
-    scores_table <- es2$theScores
-
-    meta <- scores_table[, "MUvals"]
-    contrasts <- list()
-
-    ex_cols <- grep("Effect_Ex_", colnames(scores_table))
-
-    for (col in ex_cols){
-
-        dprimes <- scores_table[, col]
-        col_name <- colnames(scores_table)[col]
-        contrasts[[col_name]] <- dprimes
-    }
-    return(list (meta=meta, contrasts=contrasts))
-}
-
-
-#---------------------
-
-
 #' Title
 #'
 #' @param scores
@@ -438,105 +438,55 @@ test_ma_range <- function(dprimes, drug_info, es=TRUE) {
 
 #' Title
 #'
-#' @import data.table
-#' @import hgu133a.db
-#'
+#' @importFrom foreach foreach %dopar%
 #' @param query_genes
+#' @param db_dir
 #' @param query_n
-#' @param drug_info
 #' @param drug_n
 #'
 #' @return
 #' @export
 #'
 #' @examples
-get_top_combos <- function(query_genes, query_n=length(query_genes),
-                           drug_info=NULL, drug_n=NULL) {
+get_top_combos <- function(query_genes, db_dir,
+                           query_n=length(query_genes), drug_n=NULL) {
 
-    #drug_info: ONLY drug_es (not drug_prls)
+    # 856086 combos = 6 * 109 * 1309
+    doMC::registerDoMC(6)
+    res_list <- foreach(i=1:6) %dopar% {
 
-    #--------------------
-    # ALGORITHM (greedy):
-    #--------------------
+        #connect to db
+        db <- RSQLite::dbConnect(RSQLite::SQLite(), dbname=db_dir)
 
-    #  - get best drug
-    #     > combine with each other drug (probe level)
-    #     > convert probes to genes
-    #  - get best combo
+        a <- i*109-108
+        b <- i*109
 
-    #--------
-    # SETUP
-    #--------
+        pb  <- txtProgressBar(min=a, max=b, style=3)
+        res <- list()
 
-    #load model & cmap data
-    mod    <- readRDS("~/Documents/Batcave/GEO/2-cmap/data/combos/model.rds")
-    cmap   <- readRDS("~/Documents/Batcave/GEO/2-cmap/data/processed/es/probes_top_tables.rds")
-    data   <- cmap$data
-    drugs  <- cmap$drugs
-    probes <- row.names(data)
+        for (j in a:b) {
 
-    #indices for drugs
-    inds <- sapply(seq_along(drugs), function(x) c(x*7-6, x*7))
-    colnames(inds) <- drugs
+            #get preds for drug combos
+            statement <- paste("SELECT * from combo_preds WHERE rowid BETWEEN",
+                               (j*1309)-1308, "AND", j*1309)
 
-    #start combo table with top drug
-    combo_table <- get_top_drugs(query_genes, query_n, drug_info,
-                                 drug_n=drug_n)[1, ]
+            combo_preds <- dbGetQuery(db, statement)
 
-    top_drug <- row.names(combo_table)
-    other_drugs <- setdiff(drugs, top_drug)
+            #format predictions
+            combo_names <- combo_preds$drug_combo
+            combo_preds <- as.data.frame(t(combo_preds[,-1]))
 
-    #get combo data
-    pairs <- lapply(seq_along(other_drugs), function(x) c(top_drug, other_drugs[x]))
-    names(pairs) <- sapply(pairs, function(x) paste(x[1], x[2], sep=" + "))
-    combo_data <- combine_cmap_pairs(pairs, data, inds)
+            colnames(combo_preds)  <- combo_names
 
-    #load annotation information
-    suppressMessages(map <- AnnotationDbi::select(hgu133a.db, probes, "SYMBOL"))
-    map <- map[!is.na(map$SYMBOL),]
-    genes <- unique(map$SYMBOL)
+            #get top drug combos
+            top_combos <- get_top_drugs(query_genes,
+                                        as.matrix(combo_preds), query_n)
 
-    #--------------
-    # PROBE PREDS
-    #--------------
-
-    #make predictions with mod
-    probe_preds <- xgboost::predict(mod, combo_data) - 0.5
-
-    #probe_preds vector to df
-    dim(probe_preds) <- c(length(probes), length(pairs))
-    colnames(probe_preds)  <- names(pairs)
-    row.names(probe_preds) <- probes
-    probe_preds <- as.data.frame(probe_preds)
-
-
-    #-----------------
-    # PROBES TO GENES
-    #-----------------
-
-    #annotate probe probe_preds with SYMBOL
-    probe_preds <- probe_preds[map$PROBEID, ]
-    probe_preds$SYMBOL <- map$SYMBOL
-
-    #where duplicated SYMBOL, choose probe with prediction furthest from 0.5
-    probe_preds <- data.table(probe_preds)
-    gene_preds <- probe_preds[,
-                              lapply(.SD, function (col) col[which.max(abs(col))]),
-                              by='SYMBOL']
-
-    #format table
-    gene_preds <- as.data.frame(gene_preds)
-    row.names(gene_preds) <- gene_preds$SYMBOL
-    gene_preds <- gene_preds[, colnames(gene_preds) != "SYMBOL"]
-
-    #------------
-    # BEST COMBO
-    #------------
-
-    #get best combo of top_drugs and other_drugs
-    best_combos <- get_top_drugs(query_genes, query_n, drug_info=as.matrix(gene_preds),
-                                 drug_n=drug_n)
-
-    combo_table <- rbind(combo_table, best_combos)
-    return(combo_table)
+            #update progress and store result
+            setTxtProgressBar(pb, j)
+            res[[ length(res)+1 ]] <- top_combos
+        }
+        dbDisconnect(db)
+    }
+    return(res)
 }
