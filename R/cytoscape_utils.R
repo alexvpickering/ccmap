@@ -1,9 +1,4 @@
-library(GeneExpressionSignature)
 
-source("~/Documents/Batcave/GEO/2-cmap/cmap_utils.R")
-
-
-#---------------------
 
 get_tan_sim <- function(drug_info, es=F) {
   #implements drug similarity measurement from DMAP (Tanimoto Coefficient)
@@ -32,7 +27,7 @@ get_tan_sim <- function(drug_info, es=F) {
   }
 
 #get similarity matrix
-sim_mat <- get_tan_sim_mat(sim) 
+sim_mat <- get_tan_sim_mat(sim)
 
 return(sim_mat)
 }
@@ -41,12 +36,12 @@ return(sim_mat)
 
 get_tan_sim_mat <- function(sim) {
   #converts sim from tan_sim into correlation matrix
-    
+
     drug_names <- names(sim)
-    sim_mat <- matrix(nrow=length(drug_names), 
-                      ncol=length(drug_names), 
+    sim_mat <- matrix(nrow=length(drug_names),
+                      ncol=length(drug_names),
                       dimnames=list(drug_names, drug_names))
-   
+
     for (dr in drug_names){
         drug_table <- sim[[dr]]$table
         sim_mat[row.names(drug_table), dr] <- drug_table$net
@@ -66,7 +61,7 @@ get_gsea_sim <- function(drug_info) {
   drug_info_eset <- ExpressionSet(drug_info, phenoData = pheno_data)
 
   #distance/similarity measuring
-  ds <- ScoreGSEA(drug_info_eset, 250, "avg")
+  ds <- GeneExpressionSignature::ScoreGSEA(drug_info_eset, 250, "avg")
   sim_mat <- (1-ds)
 
   return(sim_mat)
@@ -83,11 +78,11 @@ make_cytofiles <- function(sim_mat) {
   exemplars <- names(cluster_result@exemplars)
   clusters <- lapply(cluster_result@clusters, names)
 
-  network <- data.frame(Source = character(0), 
-                        Type = character(0), 
+  network <- data.frame(Source = character(0),
+                        Type = character(0),
                         Target = character(0), stringsAsFactors = F)
 
-  sim <- data.frame(Edge = character(0), 
+  sim <- data.frame(Edge = character(0),
                     Similarity = numeric(0), stringsAsFactors = F)
 
   for (cluster in clusters) {
@@ -95,13 +90,13 @@ make_cytofiles <- function(sim_mat) {
     exemplar <- intersect(cluster, exemplars)  #source
     closest <- names(which.max(sim_mat[setdiff(exemplars, exemplar), exemplar]))  #target
     value <- sim_mat[closest, exemplar]
-    
+
     edge <- paste(exemplar, "(1)", closest)
     row <- nrow(network) + 1
 
     network[row, ] <- c(exemplar, "1", closest)
     sim[row, ] <- c(edge, value)
-    
+
     for (drug in setdiff(cluster, exemplar)) {
       #add value of cluster drugs
       value <- sim_mat[drug, exemplar]

@@ -1,6 +1,14 @@
-library(metaMA)
-library(reshape2)
-
+#' Title
+#'
+#' @import Biobase
+#'
+#' @param diff_exprs
+#' @param prev_selections
+#'
+#' @return
+#' @export
+#'
+#' @examples
 setup_combo_data <- function(diff_exprs, prev_selections=NULL) {
 
     #add moderated effect sizes
@@ -37,21 +45,25 @@ select_combo_data <- function(diff_exprs, prev_selections){
 
         #check if previously selected
         gse_name <- names(diff_exprs)[i]
-        if (!is.null(selections[[gse_name]])) next  
+        if (!is.null(selections[[gse_name]])) next
 
         #if not, input selection
         choices <- names(diff_exprs[[i]]$top_tables)
 
         while (TRUE) {
             #select drug 1, 2, and combo contrast
-            drug1 <- tk_select.list(choices, title="Contrast for drug 1")
+            drug1 <- tcltk::tk_select.list(choices,
+                                           title="Contrast for drug 1")
             if (drug1 == "") {break}
-            drug2 <- tk_select.list(choices, title="Contrast for drug 2")
-            combo <- tk_select.list(choices, title="Contrast for drug combo")
+            drug2 <- tcltk::tk_select.list(choices,
+                                           title="Contrast for drug 2")
+            combo <- tcltk::tk_select.list(choices,
+                                           title="Contrast for drug combo")
 
             #store selections
             selection <- c(drug1=drug1, drug2=drug2, combo=combo)
-            selections[[gse_name]] <- append(selections[[gse_name]], list(selection))
+            selections[[gse_name]] <- append(selections[[gse_name]],
+                                             list(selection))
         }
     }
     return(selections)
@@ -107,8 +119,10 @@ add_dprime <- function(diff_exprs) {
 
             tt <- diff$top_tables[[con]]
 
-            #get dprime 
-            tt$dprime <- effectsize(tt$t, ((ni * nj)/(ni + nj)), df)[, "dprime"]
+            #get dprime
+            tt$dprime <- metaMA::effectsize(tt$t,
+                                            ((ni * nj)/(ni + nj)),
+                                            df)[, "dprime"]
 
             #store result
             diff_exprs[[study]]$top_tables[[con]] <- tt
@@ -121,8 +135,8 @@ add_dprime <- function(diff_exprs) {
 
 combine_cmap_pairs <- function(pairs, data, inds) {
 
-  #returns matrix with data from CMAP pairs
-  #used by xgboost model to predict drug combos
+    #returns matrix with data from CMAP pairs
+    #used by xgboost model to predict drug combos
 
     combo_data <- list()
     for (i in seq_along(pairs)) {
