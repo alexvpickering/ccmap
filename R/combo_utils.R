@@ -131,31 +131,124 @@ add_dprime <- function(diff_exprs) {
     return(diff_exprs)
 }
 
+
 #-----------------
 
-combine_cmap_pairs <- function(pairs, data, inds) {
 
-    #returns matrix with data from CMAP pairs
-    #used by xgboost model to predict drug combos
 
-    combo_data <- list()
-    for (i in seq_along(pairs)) {
+#' Title
+#'
+#' @import data.table ccdata
+#' @param db_dir
+#'
+#' @return
+#' @export
+#'
+#' @examples
+make_drug_combos <- function(db_dir=getwd()) {
 
-        dr1 <- pairs[[i]][1]
-        dr2 <- pairs[[i]][2]
 
-        dr1_data <- data[, inds[1, dr1]:inds[2, dr1]]
-        dr2_data <- data[, inds[1, dr2]:inds[2, dr2]]
+    # Setup -------------------------
 
-        colnames(dr1_data) <- gsub("^.+_", "drug1_", colnames(dr1_data))
-        colnames(dr2_data) <- gsub("^.+_", "drug2_", colnames(dr2_data))
 
-        cbo_data <- cbind(dr1_data, dr2_data)
+    #load model & cmap tables
+    data(combo_model, package="ccdata")
+    data(cmap_tables, package="ccdata")
 
-        combo_data[[i]] <- cbo_data
+    drugs  <- names(cmap_tables)
+    probes <- row.names(cmap_tables[[1]])
+
+    #list of unique drug combos
+    pairs <- combn(drugs, 2, simplify=FALSE)
+
+    #load annotation information
+    suppressMessages(library("hgu133a.db"))
+    suppressMessages(map <- AnnotationDbi::select(hgu133a.db, probes, "SYMBOL"))
+    map <- map[!is.na(map$SYMBOL),]
+    genes <- unique(map$SYMBOL)
+
+    #make blank table in SQLite database
+    db_path <- paste(db_dir, "drug_combos.sqlite", sep="/")
+    db.pdc <- RSQLite::dbConnect(RSQLite::SQLite(), dbname=db_path)
+    cols <- paste(shQuote(genes), "FLOAT", collapse=", ")
+
+    statement <- paste("CREATE TABLE combo_preds",
+                       "(drug_combo TEXT, ", cols, ")", sep="")
+
+    RSQLite::dbSendQuery(db.pdc, statement)
+
+
+    d1_cols <- paste("drug1", colnames(cmap_tables[[1]]), sep="_")
+    d2_cols <- paste("drug2", colnames(cmap_tables[[1]]), sep="_")
+
+    i <- 1
+    pb  <- txtProgressBar(min=1, max=length(pairs), style=3)
+    for (pair in pairs){
+
+
+
+        # Probe Predictions -------------------------
+
+
+        dr1 <- pair[1]
+        dr2 <- pair[2]
+
+        #combine data from cmap_tables
+        X <- cbind(cmap_tables[[dr1]], cmap_tables[[dr2]])
+        X <- as.matrix(X)
+        colnames(X) <- c(d1_cols, d2_cols)
+
+        #make predictions with combo_model
+        probe_preds <- xgboost::predict(combo_model, X) - 0.5
+
+        #predict using reverse order
+        colnames(X) <- c(d2_cols, d1_cols)
+        X <- X[, c(d1_cols, d2_cols)]
+        probe_preds_rev <- xgboost::predict(combo_model, X) - 0.5
+
+        #get average
+        probe_preds <- (probe_preds + probe_preds_rev) / 2
+
+        #probe_preds vector to df
+        probe_preds <- as.data.frame(probe_preds)
+        colnames(probe_preds)  <- paste(dr1, dr2, sep=" + ")
+        row.names(probe_preds) <- probes
+
+
+
+        # Probes to Genes -------------------------
+
+
+        #annotate probe probe_preds with SYMBOL
+        probe_preds <- probe_preds[map$PROBEID, , drop=FALSE]
+        probe_preds$SYMBOL <- map$SYMBOL
+
+        #where duplicated SYMBOL, choose probe with prediction furthest from 0.5
+        probe_preds <- data.table(probe_preds)
+        gene_preds  <- probe_preds[,
+                                   lapply(.SD, function (col) col[which.max(abs(col))]),
+                                   by='SYMBOL']
+
+
+
+        # Add to SQL Database -------------------------
+
+
+        #format table
+        gene_preds <- as.data.frame(gene_preds)
+        row.names(gene_preds) <- gene_preds$SYMBOL
+        gene_preds <- gene_preds[, -1, drop=FALSE]
+
+        gene_preds <- as.data.frame(t(gene_preds))
+        gene_preds$drug_combo <- row.names(gene_preds)
+        row.names(gene_preds) <- NULL
+
+        RSQLite::dbWriteTable(db.pdc, "combo_preds",
+                              gene_preds[, c("drug_combo", genes)],
+                              append = TRUE)
+
+        setTxtProgressBar(pb, i)
+        i <- i + 1
     }
-    combo_data <- rbindlist(combo_data)
-    combo_data <- as.matrix(combo_data)
-
-    return (combo_data)
+    close(pb)
 }
