@@ -2,15 +2,72 @@
 % Please edit documentation in R/query_combos.R
 \name{range_query_combos}
 \alias{range_query_combos}
-\title{Title}
+\title{Get overlap between query and drug combination signatures for a range of
+query gene sizes.}
 \usage{
 range_query_combos(query_genes, db_dir, ncores = parallel::detectCores(),
   step = 100)
 }
 \arguments{
-\item{ncores}{}
+\item{query_genes}{Named numeric vector of differentual expression values for
+query genes. Usually 'meta' slot of \code{get_dprimes} result.}
+
+\item{db_dir}{String specifying full path to drug_combos.sqlite database.}
+
+\item{ncores}{Number of cores to use for parallel queries. Default is all
+available.}
+
+\item{step}{Integer specifying step size for query range. Queries start
+at 100 genes, and step up by specified step size up to the number of
+common genes.}
+}
+\value{
+data.frame with number of net genes that overlap between query and drug
+   combination signatures. Columns correspond to query sizes, rows to drug
+   combinations. Combinations are sorted by decreasing area under the curve
+   formed by plotting net overlap as a function of query size.
 }
 \description{
-Title
+Queries drug combinations database using a range of query gene sizes. Results
+are sorted by an auc metric which has the advantage of weighting query genes
+according to their extent of differential expression.
+}
+\details{
+All 856086 combinations of the 1309 drugs from the Connectivity Map build 02
+release are compared to the query signature. Drug combinations with the
+largest positive and negative net overlap are predicted to, respectively,
+mimic and reverse the query signature. Drug combinations may more closely
+mimic or reverse the query signature than individual drugs.
+}
+\examples{
+\dontrun{
+library(crossmeta)
+library(lydata)
+
+db_dir <- "path/to/drug_combos.sqlite"
+
+# location of data
+data_dir <- system.file("extdata", package = "lydata")
+
+# gather GSE names
+gse_names  <- c("GSE9601", "GSE15069", "GSE50841", "GSE34817", "GSE29689")
+
+# load previous analysis
+anals <- load_diff(gse_names, data_dir)
+
+# perform meta-analysis
+es <- es_meta(anals)
+
+# get query signature
+dprimes <- get_dprimes(es)
+
+# query drug combination database for range of query sizes
+ranges_res <- range_query_combos(dprimes$meta, db_dir)
+}
+}
+\seealso{
+Other query.functions: \code{\link{query_combos}},
+  \code{\link{query_drugs}},
+  \code{\link{range_query_drugs}}
 }
 

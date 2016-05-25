@@ -2,28 +2,46 @@
 % Please edit documentation in R/query_utils.R
 \name{get_dprimes}
 \alias{get_dprimes}
-\title{Extract unbiased effect sizes from meta-analysis by ES.GeneMeta.}
+\title{Extract unbiased effect sizes from meta-analysis by crossmeta.}
 \usage{
-get_dprimes(es2)
+get_dprimes(es)
 }
 \arguments{
-\item{es2}{ES.GeneMeta.res object, result of of call to \code{ES.GeneMeta}}
+\item{es}{Result of call to \code{es_meta}.}
 }
 \value{
 List containing:
-  \item{meta}{Named numeric vector with overall mean effect size for each gene
-     from meta analysis.}
+  \item{meta}{Named numeric vector with overall mean effect sizes for all genes
+     from meta-analysis.}
   \item{contrasts}{List of named numeric vectors (one per contrast) with
-     unbiased effect sizes for each gene from meta analysis.}
+     unbiased effect sizes for all measured genes.}
 }
 \description{
-Function extracts MUvals (overall mean effect size) and Effect_Ex (unbiased
+Function extracts mu (overall mean effect size) and dprimes (unbiased
 effect sizes from each contrast).
 }
 \details{
-Result used to query connectivity map drugs.
+Result used to query connectivity map drugs and predicted drug combinations.
+}
+\examples{
+library(crossmeta)
+library(lydata)
+
+data_dir <- system.file("extdata", package = "lydata")
+
+# gather GSE names
+gse_names  <- c("GSE9601", "GSE15069", "GSE50841", "GSE34817", "GSE29689")
+
+# load previous differential expression analysis
+anals <- load_diff(gse_names, data_dir)
+
+# run meta-analysis
+es <- es_meta(anals)
+
+#get dprimes
+dprimes <- get_dprimes(es)
 }
 \seealso{
-\link{\code{ES.GeneMeta}}.
+\code{\link{es_meta}}.
 }
 

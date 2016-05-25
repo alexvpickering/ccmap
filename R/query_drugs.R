@@ -1,41 +1,70 @@
 #' Get overlap between query and drug signatures.
 #'
+#' Determines the number of genes that change in the same direction between
+#' query and drug signatures.
 #'
+#' Drugs with the largest positive and negative net overlap are predicted to,
+#' respectively, mimic and reverse the query signature.
+#'
+#' @importFrom methods as
+#' @importFrom utils head tail
 #'
 #' @param query_genes Named numeric vector of differentual expression values for
 #'   query genes. Usually 'meta' slot of \code{get_dprimes} result.
-#' @param query_n Integer specifying how many of the top DE gene should be used
-#'   from query_genes. If there are less than query_n genes in common between
-#'   query and drug signatures, the number of common genes will be used.
 #' @param drug_info Matrix of differential expression values or gene rankings
 #'   (must set es=FALSE) for drugs. Gene rankings should be in increasing order
 #'   (e.g. 1 is the most up or down regulated gene). Rows are genes, columns are
 #'   drugs.
-#' @param drug_genes List of lists (one per drug) with slots 'up' and 'dn' each
-#'   containing a character vector with the names of up- and down-regulated
-#'   genes. If not supplied, created by \code{get_drug_genes}. Useful only if
-#'   multiple calls to \code{get_top_drugs} needed (e.g. in \code{test_ma}).
+#' @param query_n Integer specifying how many of the top DE gene should be used
+#'   from query_genes. If there are less than query_n genes in common between
+#'   query and drug signatures, the number of common genes will be used.
+#'   Parameter ignored if \code{step} not \code{NULL}.
 #' @param drug_n Integer specifying how many of the top DE genes should be
 #'   used from drug_genes. If there are less than query_n genes in common
 #'   between query and drug signatures, the number of common genes will be used.
+#' @param step Integer specifying step size for query range. Queries start
+#'    at 100 genes, and step up by specified step size up to the number of
+#'    common genes.
 #' @param es Does drug_info contain effect size data? If FALSE, gene ranking
 #'   data is assumed.
+#' @family query functions
 #'
-#' @return data.frame with columns:
-#'   \item{}{}
-#'   \item{}{}
-#'   \item{}{}
-#'   \item{}{}
-#'   \item{}{}
+#' @return List of data.frames (one per query size) each with columns:
+#'   \item{drug_n}{Number of drug genes used.}
+#'   \item{query_n}{Number of query genes used.}
+#'   \item{overlap}{Number of genes that change in the same direction in drug
+#'      and query signatures.}
+#'   \item{cross}{Number of genes that change in the opposite direction in drug
+#'      and query signatures.}
+#'   \item{net}{Difference between overlap and cross.}
 #' @export
 #'
 #' @examples
+#'
+#' # create drug signatures
+#' genes <- paste("GENE", 1:1000, sep = "_")
+#' set.seed(0)
+#'
+#' drug_info <- data.frame(row.names = genes,
+#'                         drug1  = rnorm(1000, sd = 2),
+#'                         drug2  = rnorm(1000, sd = 2),
+#'                         drug3  = rnorm(1000, sd = 2))
+#'
+#' # query signature is drug3
+#' query_sig <- drug_info$drug3
+#' names(query_sig) <- genes
+#'
+#' res <- query_drugs(query_sig, as.matrix(drug_info))
 
-query_drugs <- function(query_genes, drug_info,
-                       query_n=length(query_genes),
-                       drug_n=nrow(drug_info),
-                       step=NULL,
-                       es=TRUE) {
+
+query_drugs <- function(query_genes, drug_info = NULL,
+                       query_n = length(query_genes),
+                       drug_n = nrow(drug_info),
+                       step = NULL,
+                       es = TRUE) {
+
+    #default to cmap_es for drug_info
+    if (is.null(drug_info)) cmap_es <- ccdata::cmap_es
 
     #get top up/dn drug genes
     drug_genes <- get_drug_genes(drug_info, query_genes, drug_n, es)
@@ -74,19 +103,44 @@ query_drugs <- function(query_genes, drug_info,
 
 #---------------------
 
-#' Title
+#' Get overlap between query and drug signatures for a range of query gene sizes.
 #'
-#' @param scores
-#' @param drug_info
-#' @param query_ns
-#' @param es
+#' Queries drug signatures using a range of query gene sizes. Results are sorted
+#' by an auc metric which has the advantage of weighting query genes according
+#' to their extent of differential expression.
 #'
-#' @return
+#' Drugs with, respectively, the largest positive and negative auc (head and
+#' tail of resulting data.frame) are predicted to mimic and reverse the query
+#' signature.
+#'
+#' @inheritParams query_drugs
+#' @family query functions
+#'
+#' @return data.frame with number of net genes that overlap between query and
+#'    drug signatures. Columns correspond to query sizes, rows to drugs. Drugs
+#'    are sorted by decreasing area under the curve formed by plotting net
+#'    overlap as a function of query size.
+#'
 #' @export
 #'
 #' @examples
+#'
+#' # create drug signatures
+#' genes <- paste("GENE", 1:1000, sep = "_")
+#' set.seed(0)
+#'
+#' drug_info <- data.frame(row.names = genes,
+#'                         drug1  = rnorm(1000, sd = 2),
+#'                         drug2  = rnorm(1000, sd = 2),
+#'                         drug3  = rnorm(1000, sd = 2))
+#'
+#' # query signature is drug3
+#' query_sig <- drug_info$drug3
+#' names(query_sig) <- genes
+#'
+#' res <- range_query_drugs(query_sig, as.matrix(drug_info))
 
-range_query_drugs <- function(query_genes, drug_info, es=TRUE, step=100) {
+range_query_drugs <- function(query_genes, drug_info=NULL, es=TRUE, step=100) {
 
     #query drugs for a range of query sizes
     top_drugs <- query_drugs(query_genes, drug_info, es=es, step=step)

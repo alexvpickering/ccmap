@@ -1,16 +1,59 @@
-
-#' Title
+#' Get overlap between query and drug combination signatures.
+#'
+#' Determines the number of genes that change in the same direction between
+#' query and predicted drug combination signatures.
+#'
+#' All 856086 combinations of the 1309 drugs from the Connectivity Map build 02
+#' release are compared to the query signature. Drug combinations with the
+#' largest positive and negative net overlap are predicted to, respectively,
+#' mimic and reverse the query signature. Drug combinations may more closely
+#' mimic or reverse the query signature than individual drugs.
 #'
 #' @importFrom foreach foreach %dopar%
-#' @param query_genes
-#' @param db_dir
-#' @param query_n
-#' @param drug_n
 #'
-#' @return
+#' @inheritParams query_drugs
+#' @param db_dir String specifying full path to drug_combos.sqlite database.
+#' @param ncores Number of cores to use for parallel queries. Default is all
+#'    available.
+#'
+#' @family query functions
+#' @seealso \code{\link{make_drug_combos}} to create drug combination database.
+#'
+#' @return List of data.frames (one per query size) each with columns:
+#'   \item{drug_n}{Number of drug combination genes used.}
+#'   \item{query_n}{Number of query genes used.}
+#'   \item{overlap}{Number of genes that change in the same direction in drug
+#'      combination and query signatures.}
+#'   \item{cross}{Number of genes that change in the opposite direction in drug
+#'      combination and query signatures.}
+#'   \item{net}{Difference between overlap and cross.}
 #' @export
 #'
-#' @examples
+#' @examples \dontrun{
+#' library(crossmeta)
+#' library(lydata)
+#'
+#' db_dir <- "path/to/drug_combos.sqlite"
+#'
+#' # location of data
+#' data_dir <- system.file("extdata", package = "lydata")
+#'
+#' # gather GSE names
+#' gse_names  <- c("GSE9601", "GSE15069", "GSE50841", "GSE34817", "GSE29689")
+#'
+#' # load previous analysis
+#' anals <- load_diff(gse_names, data_dir)
+#'
+#' # perform meta-analysis
+#' es <- es_meta(anals)
+#'
+#' # get query signature
+#' dprimes <- get_dprimes(es)
+#'
+#' # query drug combination database
+#' top_combos <- query_combos(dprimes$meta, db_dir)
+#' }
+
 query_combos <- function(query_genes, db_dir,
                         query_n=length(query_genes),
                         ncores=parallel::detectCores(),
@@ -27,11 +70,11 @@ query_combos <- function(query_genes, db_dir,
         #connect to db
         db <- RSQLite::dbConnect(RSQLite::SQLite(), dbname=db_dir)
 
-        #a <- sum(bins[1:i]) - bins[i] + 1
-        #b <- sum(bins[1:i])
+        a <- sum(bins[1:i]) - bins[i] + 1
+        b <- sum(bins[1:i])
 
-        a <- i*2-1
-        b <- i*2
+        #a <- i*2-1
+        #b <- i*2
 
         tmp <- list()
         for (j in a:b) {
@@ -73,19 +116,55 @@ query_combos <- function(query_genes, db_dir,
 #---------------------
 
 
-#' Title
+#' Get overlap between query and drug combination signatures for a range of
+#' query gene sizes.
 #'
-#' @param query_genes
-#' @param db_dir
-#' @param ncores
+#' Queries drug combinations database using a range of query gene sizes. Results
+#' are sorted by an auc metric which has the advantage of weighting query genes
+#' according to their extent of differential expression.
 #'
-#' @return
+#' All 856086 combinations of the 1309 drugs from the Connectivity Map build 02
+#' release are compared to the query signature. Drug combinations with the
+#' largest positive and negative net overlap are predicted to, respectively,
+#' mimic and reverse the query signature. Drug combinations may more closely
+#' mimic or reverse the query signature than individual drugs.
+#'
+#' @inheritParams query_combos
+#' @family query functions
+#'
+#' @return data.frame with number of net genes that overlap between query and drug
+#'    combination signatures. Columns correspond to query sizes, rows to drug
+#'    combinations. Combinations are sorted by decreasing area under the curve
+#'    formed by plotting net overlap as a function of query size.
 #' @export
 #'
-#' @examples
+#' @examples \dontrun{
+#' library(crossmeta)
+#' library(lydata)
+#'
+#' db_dir <- "path/to/drug_combos.sqlite"
+#'
+#' # location of data
+#' data_dir <- system.file("extdata", package = "lydata")
+#'
+#' # gather GSE names
+#' gse_names  <- c("GSE9601", "GSE15069", "GSE50841", "GSE34817", "GSE29689")
+#'
+#' # load previous analysis
+#' anals <- load_diff(gse_names, data_dir)
+#'
+#' # perform meta-analysis
+#' es <- es_meta(anals)
+#'
+#' # get query signature
+#' dprimes <- get_dprimes(es)
+#'
+#' # query drug combination database for range of query sizes
+#' ranges_res <- range_query_combos(dprimes$meta, db_dir)
+#' }
 
 range_query_combos <- function(query_genes, db_dir,
-                              ncores=parallel::detectCores(), step=100) {
+                               ncores=parallel::detectCores(), step=100) {
 
     #query combos for a range of query sizes
     combos_res <- query_combos(query_genes, db_dir, ncores=ncores, step=step)

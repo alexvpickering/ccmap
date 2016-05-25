@@ -2,14 +2,29 @@
 % Please edit documentation in R/combo_utils.R
 \name{make_drug_combos}
 \alias{make_drug_combos}
-\title{Title}
+\title{Make drug combination database.}
 \usage{
 make_drug_combos(db_dir = getwd())
 }
 \arguments{
-\item{db_dir}{}
+\item{db_dir}{String specifying directory in which to create database.
+Default is working directory.}
 }
 \description{
-Title
+Creates an SQLite database with predicted effect sizes for all unique two-drug
+combinations of drugs in the Connectivity Map build 2.
+}
+\details{
+Prediction model is a gradient boosted random forest trained on GEO microarray
+studies where single treatments and their combinations were assayed.
+}
+\examples{
+\dontrun{
+# make drug combination data base
+make_drug_combos()
+}
+}
+\seealso{
+\link{query_combos}, \link{range_query_combos}.
 }
 

@@ -1,35 +1,50 @@
-#' Extract unbiased effect sizes from meta-analysis by ES.GeneMeta.
+#' Extract unbiased effect sizes from meta-analysis by crossmeta.
 #'
-#' Function extracts MUvals (overall mean effect size) and Effect_Ex (unbiased
+#' Function extracts mu (overall mean effect size) and dprimes (unbiased
 #' effect sizes from each contrast).
 #'
-#' Result used to query connectivity map drugs.
+#' Result used to query connectivity map drugs and predicted drug combinations.
 #'
-#' @param es2 ES.GeneMeta.res object, result of of call to \code{ES.GeneMeta}
+#' @param es Result of call to \code{es_meta}.
 #'
 #' @return List containing:
-#'   \item{meta}{Named numeric vector with overall mean effect size for each gene
-#'      from meta analysis.}
+#'   \item{meta}{Named numeric vector with overall mean effect sizes for all genes
+#'      from meta-analysis.}
 #'   \item{contrasts}{List of named numeric vectors (one per contrast) with
-#'      unbiased effect sizes for each gene from meta analysis.}
+#'      unbiased effect sizes for all measured genes.}
 #' @export
 #'
-#' @seealso \link{\code{ES.GeneMeta}}.
+#' @seealso \code{\link{es_meta}}.
 #' @examples
-get_dprimes <- function(es2) {
+#' library(crossmeta)
+#' library(lydata)
+#'
+#' data_dir <- system.file("extdata", package = "lydata")
+#'
+#' # gather GSE names
+#' gse_names  <- c("GSE9601", "GSE15069", "GSE50841", "GSE34817", "GSE29689")
+#'
+#' # load previous differential expression analysis
+#' anals <- load_diff(gse_names, data_dir)
+#'
+#' # run meta-analysis
+#' es <- es_meta(anals)
+#'
+#' #get dprimes
+#' dprimes <- get_dprimes(es)
 
-    scores_table <- es2$theScores
+get_dprimes <- function(es) {
 
-    meta <- scores_table[, "MUvals"]
+    meta <- es$filt$mu
+    names(meta) <- row.names(es$filt)
+
     contrasts <- list()
+    dp_cols <- grep("^dp", colnames(es$raw), value = TRUE)
 
-    ex_cols <- grep("Effect_Ex_", colnames(scores_table))
-
-    for (col in ex_cols){
-
-        dprimes <- scores_table[, col]
-        col_name <- colnames(scores_table)[col]
-        contrasts[[col_name]] <- dprimes
+    for (col in dp_cols){
+        dprimes <- es$raw[, col]
+        names(dprimes) <- row.names(es$raw)
+        contrasts[[col]] <- dprimes[!is.na(dprimes)]
     }
     return(list (meta=meta, contrasts=contrasts))
 }
@@ -38,19 +53,20 @@ get_dprimes <- function(es2) {
 #---------------------
 
 
-#' Get list of top differentially regulated genes for drugs.
-#'
-#' @inheritParams get_top_drugs
-#'
-#' @export
-#' @seealso get_top_drugs
-#' @return List of lists (one per drug in drug_info) with slots:
-#'   \item{up}{Named vector of genes up-regulated by drug.}
-#'   \item{up}{Named vector of genes down-regulated by drug.}
-#'
+# Get list of top differentially regulated genes for drugs.
+#
+# @inheritParams query_drugs
+#
+# @seealso query_drugs
+# @return List of lists (one per drug in drug_info) with slots:
+#   \item{up}{Named vector of genes up-regulated by drug.}
+#   \item{up}{Named vector of genes down-regulated by drug.}
 
 get_drug_genes <- function(drug_info, query_genes,
                            drug_n=nrow(drug_info), es=TRUE) {
+
+    #fix for my drug_combos.sqlite (remove if re-create)
+    row.names(drug_info) <- toupper(row.names(drug_info))
 
     drug_genes <- list()
     drugs <- colnames(drug_info)
@@ -86,12 +102,12 @@ get_drug_genes <- function(drug_info, query_genes,
 
 #----------------
 
-#' Get top DE genes for query.
-#'
-#' @inheritParams get_top_drugs
-#'
-#' @return List with slots 'up' and 'dn' each containing captalized character
-#'   vectors of up- and down-regulated genes.
+# Get top DE genes for query.
+#
+# @inheritParams query_drugs
+#
+# @return List with slots 'up' and 'dn' each containing captalized character
+#   vectors of up- and down-regulated genes.
 
 setup_query_genes <- function(query_genes, query_n, drug_info) {
 
@@ -109,21 +125,20 @@ setup_query_genes <- function(query_genes, query_n, drug_info) {
 
 #---------------------
 
-#' Get number of top DE genes.
-#'
-#' Function returns at most the requested number of genes, attempting to devide
-#' equally between the top up and down regulated genes.
-#'
-#' If fewer than half of requested genes are available among up (or down)
-#' regulated genes, then more genes will be taken from down (or up) regulated
-#' genes.
-#'
-#' @param genes Named numeric vector of gene effect sizes.
-#' @param genes_n Integer specifying the desired number of the top DE genes.
-#'
-#' @seealso \code{\link{setup_query_genes}}, \code{\link{get_drug_genes}}
-#' @return List with slots 'up' and 'dn' each containing character vectors
-#'   of up- and down-regulated genes.
+# Get number of top DE genes.
+#
+# Function returns at most the requested number of genes, attempting to devide
+# equally between the top up and down regulated genes.
+#
+# If fewer than half of requested genes are available among up (or down)
+# regulated genes, then more genes will be taken from down (or up) regulated
+# genes.
+#
+# @inheritParams query_drugs
+#
+# @seealso \code{\link{setup_query_genes}}, \code{\link{get_drug_genes}}
+# @return List with slots 'up' and 'dn' each containing character vectors
+#   of up- and down-regulated genes.
 
 get_updn <- function (genes, genes_n) {
 
@@ -158,17 +173,16 @@ get_updn <- function (genes, genes_n) {
 
 #---------------------
 
-#' Title
-#'
-#' @param drug_genes
-#' @param query_genes
-#' @param tan_sim
-#'
-#' @return
-#' @export
-#'
-#' @examples
-get_overlap <- function(drug_genes, query_genes, tan_sim=FALSE) {
+# Get overlap between drug and query signatures.
+#
+# Determines number of genes regulated in the same direction between drug and
+# query signatures.
+#
+# @inheritParams query_drugs
+#
+# @return Data.frame with query_n, drug_n, and overlap columns.
+
+get_overlap <- function(drug_genes, query_genes) {
     #used to provide overlap between drug_genes and query_genes
 
     drugs <- names(drug_genes)
@@ -199,60 +213,43 @@ get_overlap <- function(drug_genes, query_genes, tan_sim=FALSE) {
 
 
 
-get_range_res <- function(test_res) {
+# Format results for range_query functions.
+#
+# Generates data.frame with net overlap at each query size for all drugs or drug
+# combinations. Results are sorted by auc from nets vs query gene sizes.
+#
+# @param query_res Reslt of call to query_drugs
 
-    #setup ranks and nets dataframes
-    drugs <- row.names(test_res[[1]])
-    query_ns <- as.integer(names(test_res))
+get_range_res <- function(query_res) {
 
-    ranks <- data.frame(row.names=drugs)
-    nets  <- data.frame(row.names=drugs)
+    # bind 'net' from data.frames for all query sizes
+    query_ns <- as.integer(names(query_res))
+    drugs <- row.names(query_res[[1]])
 
-    #fill in dataframes
-    for (i in seq_along(test_res)) {
+    query_res <- lapply(query_res, function(x) x[drugs, "net", drop = FALSE])
+    query_res <- do.call(cbind, query_res)
+    colnames(query_res) <- query_ns
 
-        query_n <- names(test_res)[i]
-        ranks[drugs, query_n] <- sapply(drugs, get_drug_rank, test_res[[i]])
-        nets[drugs, query_n] <- test_res[[i]][drugs, "net"]
-    }
-
-
-    #sort nets by auc formed by plot of nets vs query_n
-    aucs <- sapply(as.data.frame(t(nets)), function(y) MESS::auc(query_ns, y))
+    #sort query_res by auc formed by plot of nets vs query_n
+    aucs <- apply(query_res, 1, function(y) MESS::auc(query_ns, y))
     aucs <- sort(aucs, decreasing=TRUE)
-    nets <- nets[names(aucs), ]
+    query_res <- query_res[names(aucs), ]
 
-    #sort ranks by frequency of top ten ranks
-    top_tens <- rowSums(ranks <= 10)
-    top_tens <- sort(top_tens, decreasing=TRUE)
-    ranks <- ranks[names(top_tens), ]
-
-    return(list(ranks=ranks, nets=nets))
+    return(query_res)
 }
 
 #---------------------
 
-#' Title
-#'
-#' @param top_drugs
-#' @param drug_name
-#'
-#' @return
-#' @export
-#'
-#' @examples
-get_drug_rank <- function(drug_name, top_drugs) {
-    #used by test_ma: returns number of drugs with net >= drug_name
 
-    drug_net <- top_drugs[drug_name, "net"]
-    drug_rank <- nrow(top_drugs[top_drugs$net >= drug_net, ])
-
-    return(drug_rank)
-}
-
-
-
-
+# Bind list of data.frames
+#
+# rbindlist is fast but data.tables have a different syntax/structure than
+# data.frames. Function thus uses rbindlist and returns data.frame with
+# restored rownames.
+#
+# @param l list of data.frames
+#
+# @return data.frame composed of vertically stacked data.frames in l.
 
 clean_rbindlist <- function(l) {
 
@@ -268,4 +265,3 @@ clean_rbindlist <- function(l) {
 
     return(df)
 }
-

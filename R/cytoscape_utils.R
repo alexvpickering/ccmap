@@ -58,7 +58,7 @@ get_gsea_sim <- function(drug_info) {
                            row.names = colnames(drug_info))
 
   pheno_data <- as(pheno_data, "AnnotatedDataFrame")
-  drug_info_eset <- ExpressionSet(drug_info, phenoData = pheno_data)
+  drug_info_eset <- Biobase::ExpressionSet(drug_info, phenoData = pheno_data)
 
   #distance/similarity measuring
   ds <- GeneExpressionSignature::ScoreGSEA(drug_info_eset, 250, "avg")
@@ -72,7 +72,7 @@ get_gsea_sim <- function(drug_info) {
 make_cytofiles <- function(sim_mat) {
 
   #affinity propogation clustering
-  cluster_result <- apcluster(sim_mat)
+  cluster_result <- apcluster::apcluster(sim_mat)
 
   #generate network/similarity file for cytoscape
   exemplars <- names(cluster_result@exemplars)
@@ -110,8 +110,8 @@ make_cytofiles <- function(sim_mat) {
   }
 
   #save network/similarity files
-  write.table(network, "drug_network.txt", quote=FALSE, row.names=FALSE, sep='\t')
-  write.table(sim, "drug_sim.txt", quote=FALSE, row.names=FALSE, sep='\t')
+  utils::write.table(network, "drug_network.txt", quote=FALSE, row.names=FALSE, sep='\t')
+  utils::write.table(sim, "drug_sim.txt", quote=FALSE, row.names=FALSE, sep='\t')
 
   #generate drug clusters file
   drug_names <- colnames(sim_mat)
@@ -120,7 +120,7 @@ make_cytofiles <- function(sim_mat) {
   for (i in seq_along(cluster_result)) {
     drug_clusters[cluster_result[[i]], "Cluster"] <- i
   }
-  write.table(drug_clusters, "drug_clusters.txt", quote=FALSE, row.names=FALSE, sep='\t')
+  utils::write.table(drug_clusters, "drug_clusters.txt", quote=FALSE, row.names=FALSE, sep='\t')
 }
 
 #-------------------

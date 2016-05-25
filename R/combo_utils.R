@@ -1,14 +1,13 @@
-#' Title
-#'
-#' @import Biobase
-#'
-#' @param diff_exprs
-#' @param prev_selections
-#'
-#' @return
-#' @export
-#'
-#' @examples
+# Setup drug combination training data
+#
+# User is asked to select drug1, drug2, and combo contrasts for each GSE.
+# Selections are then used create training data.frame.
+#
+# @param diff_exprs Result from call to \code{\link[crossmeta]{diff_expr}}.
+# @param prev_selections Used to re-use previous selections.
+#
+# @return data.frame
+
 setup_combo_data <- function(diff_exprs, prev_selections=NULL) {
 
     #add moderated effect sizes
@@ -20,15 +19,22 @@ setup_combo_data <- function(diff_exprs, prev_selections=NULL) {
     #combine
     data <- combine_combo_data(diff_exprs, selections)
 
-    #save probe order
-    order <- featureNames(diff_exprs[[1]]$eset)
-
     #return result
-    combo_data <- list(data=data, selections=selections, order=order)
+    combo_data <- list(data=data, selections=selections)
     return(combo_data)
 }
 
 #---------------
+
+# Select drug1, drug2, and combo contrasts for each GSE
+#
+# Used by setup_combo_data to ask user to select drug1, drug2, and combo
+# contrasts for each GSE.
+#
+# @inheritParams setup_combo_data
+#
+# @return list (one per GSE) of lists (one per combination treatment)
+#    with contrast names for each combination treatment in each GSE.
 
 select_combo_data <- function(diff_exprs, prev_selections){
 
@@ -71,17 +77,27 @@ select_combo_data <- function(diff_exprs, prev_selections){
 
 #---------------
 
+# Creates final drug combination training data.frame
+#
+# Used by setup_combo_data to create final drug combination data.frame.
+#
+# @inheritParams setup_combo_data
+#
+# @return data.frame
+
 combine_combo_data <- function(diff_exprs, selections){
 
     #return value
-    data <- data.frame()
-    ord <- row.names(diff_exprs[[1]]$eset)
+    data <- list()
 
     #loop through each GSE
     for (i in seq_along(selections)) {
 
+        print(i)
+
         tops <- diff_exprs[[i]]$top_tables
         sels <- selections[[i]]
+        ord <- row.names(tops[[1]])
 
         #loop through each selection within each GSE
         for (sel in sels) {
@@ -95,14 +111,27 @@ combine_combo_data <- function(diff_exprs, selections){
             colnames(drug2) <- paste("drug2", colnames(drug2), sep="_")
             colnames(combo) <- paste("combo", colnames(combo), sep="_")
 
-            data <- rbind(data, cbind(drug1, drug2, combo))
+            data[[length(data)+1]] <- cbind(drug1, drug2, combo, row.names=NULL)
+
+            print(sum(is.na(data[[length(data)]]$combo_dprime)))
         }
     }
+    data <- data.table::rbindlist(data)
+    data <- as.data.frame(data)
     return(data)
 }
 
 
 #-----------------
+
+# Add dprimes to top tables.
+#
+# Used by setup_combo_data to add moderated unbiased standardised effect sizes
+# (dprimes) to top tables from differential expression analysis.
+#
+# @inheritParams setup_combo_data
+#
+# @return diff_exprs with dprimes added to top_tables for each contrast.
 
 add_dprime <- function(diff_exprs) {
 
@@ -113,7 +142,7 @@ add_dprime <- function(diff_exprs) {
 
         for (con in names(diff$top_tables)) {
             #get sample sizes and top table for contrast
-            classes <- diff$mama_data$clinicals[[con]]$treatment
+            classes <- pData(diff$eset)$treatment
             ni <- length(classes[classes == "ctrl"])
             nj <- length(classes[classes == "test"])
 
@@ -136,15 +165,26 @@ add_dprime <- function(diff_exprs) {
 
 
 
-#' Title
+#' Make drug combination database.
+#'
+#' Creates an SQLite database with predicted effect sizes for all unique two-drug
+#' combinations of drugs in the Connectivity Map build 2.
+#'
+#' Prediction model is a gradient boosted random forest trained on GEO microarray
+#' studies where single treatments and their combinations were assayed.
 #'
 #' @import data.table ccdata
-#' @param db_dir
+#' @param db_dir String specifying directory in which to create database.
+#'    Default is working directory.
 #'
-#' @return
 #' @export
+#' @seealso \link{query_combos}, \link{range_query_combos}.
 #'
-#' @examples
+#' @examples \dontrun{
+#' # make drug combination data base
+#' make_drug_combos()
+#' }
+
 make_drug_combos <- function(db_dir=getwd()) {
 
 
@@ -152,19 +192,23 @@ make_drug_combos <- function(db_dir=getwd()) {
 
 
     #load model & cmap tables
-    data(combo_model, package="ccdata")
-    data(cmap_tables, package="ccdata")
+    combo_model  <- ccdata::combo_model
+
+    cmap_tables1 <- ccdata::cmap_tables1
+    cmap_tables2 <- ccdata::cmap_tables2
+    cmap_tables  <- c(cmap_tables1, cmap_tables2)
 
     drugs  <- names(cmap_tables)
     probes <- row.names(cmap_tables[[1]])
 
     #list of unique drug combos
-    pairs <- combn(drugs, 2, simplify=FALSE)
+    pairs <- utils::combn(drugs, 2, simplify=FALSE)
 
     #load annotation information
-    suppressMessages(library("hgu133a.db"))
-    suppressMessages(map <- AnnotationDbi::select(hgu133a.db, probes, "SYMBOL"))
+    hgu133a <- crossmeta:::get_biocpack("hgu133a.db")
+    suppressMessages(map <- AnnotationDbi::select(hgu133a, probes, "SYMBOL"))
     map <- map[!is.na(map$SYMBOL),]
+    map$SYMBOL <- toupper(map$SYMBOL)
     genes <- unique(map$SYMBOL)
 
     #make blank table in SQLite database
@@ -182,7 +226,7 @@ make_drug_combos <- function(db_dir=getwd()) {
     d2_cols <- paste("drug2", colnames(cmap_tables[[1]]), sep="_")
 
     i <- 1
-    pb  <- txtProgressBar(min=1, max=length(pairs), style=3)
+    pb  <- utils::txtProgressBar(min=1, max=length(pairs), style=3)
     for (pair in pairs){
 
 
@@ -199,15 +243,15 @@ make_drug_combos <- function(db_dir=getwd()) {
         colnames(X) <- c(d1_cols, d2_cols)
 
         #make predictions with combo_model
-        probe_preds <- xgboost::predict(combo_model, X) - 0.5
+        probe_preds <- xgboost::predict(combo_model, X)
 
         #predict using reverse order
         colnames(X) <- c(d2_cols, d1_cols)
         X <- X[, c(d1_cols, d2_cols)]
-        probe_preds_rev <- xgboost::predict(combo_model, X) - 0.5
+        probe_preds_rev <- xgboost::predict(combo_model, X)
 
-        #get average
-        probe_preds <- (probe_preds + probe_preds_rev) / 2
+        #get average then multiply by 1.5 (model correction factor)
+        probe_preds <- (probe_preds + probe_preds_rev) / 2 * 1.5
 
         #probe_preds vector to df
         probe_preds <- as.data.frame(probe_preds)
@@ -223,7 +267,7 @@ make_drug_combos <- function(db_dir=getwd()) {
         probe_preds <- probe_preds[map$PROBEID, , drop=FALSE]
         probe_preds$SYMBOL <- map$SYMBOL
 
-        #where duplicated SYMBOL, choose probe with prediction furthest from 0.5
+        #where duplicated SYMBOL, choose probe with largest absolute prediction
         probe_preds <- data.table(probe_preds)
         gene_preds  <- probe_preds[,
                                    lapply(.SD, function (col) col[which.max(abs(col))]),
@@ -247,7 +291,7 @@ make_drug_combos <- function(db_dir=getwd()) {
                               gene_preds[, c("drug_combo", genes)],
                               append = TRUE)
 
-        setTxtProgressBar(pb, i)
+        utils::setTxtProgressBar(pb, i)
         i <- i + 1
     }
     close(pb)

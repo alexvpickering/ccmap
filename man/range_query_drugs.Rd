@@ -2,14 +2,62 @@
 % Please edit documentation in R/query_drugs.R
 \name{range_query_drugs}
 \alias{range_query_drugs}
-\title{Title}
+\title{Get overlap between query and drug signatures for a range of query gene sizes.}
 \usage{
-range_query_drugs(query_genes, drug_info, es = TRUE, step = 100)
+range_query_drugs(query_genes, drug_info = NULL, es = TRUE, step = 100)
 }
 \arguments{
-\item{es}{}
+\item{query_genes}{Named numeric vector of differentual expression values for
+query genes. Usually 'meta' slot of \code{get_dprimes} result.}
+
+\item{drug_info}{Matrix of differential expression values or gene rankings
+(must set es=FALSE) for drugs. Gene rankings should be in increasing order
+(e.g. 1 is the most up or down regulated gene). Rows are genes, columns are
+drugs.}
+
+\item{es}{Does drug_info contain effect size data? If FALSE, gene ranking
+data is assumed.}
+
+\item{step}{Integer specifying step size for query range. Queries start
+at 100 genes, and step up by specified step size up to the number of
+common genes.}
+}
+\value{
+data.frame with number of net genes that overlap between query and
+   drug signatures. Columns correspond to query sizes, rows to drugs. Drugs
+   are sorted by decreasing area under the curve formed by plotting net
+   overlap as a function of query size.
 }
 \description{
-Title
+Queries drug signatures using a range of query gene sizes. Results are sorted
+by an auc metric which has the advantage of weighting query genes according
+to their extent of differential expression.
+}
+\details{
+Drugs with, respectively, the largest positive and negative auc (head and
+tail of resulting data.frame) are predicted to mimic and reverse the query
+signature.
+}
+\examples{
+
+# create drug signatures
+genes <- paste("GENE", 1:1000, sep = "_")
+set.seed(0)
+
+drug_info <- data.frame(row.names = genes,
+                        drug1  = rnorm(1000, sd = 2),
+                        drug2  = rnorm(1000, sd = 2),
+                        drug3  = rnorm(1000, sd = 2))
+
+# query signature is drug3
+query_sig <- drug_info$drug3
+names(query_sig) <- genes
+
+res <- range_query_drugs(query_sig, as.matrix(drug_info))
+}
+\seealso{
+Other query.functions: \code{\link{query_combos}},
+  \code{\link{query_drugs}},
+  \code{\link{range_query_combos}}
 }
 

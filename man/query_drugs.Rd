@@ -4,7 +4,7 @@
 \alias{query_drugs}
 \title{Get overlap between query and drug signatures.}
 \usage{
-query_drugs(query_genes, drug_info, query_n = length(query_genes),
+query_drugs(query_genes, drug_info = NULL, query_n = length(query_genes),
   drug_n = nrow(drug_info), step = NULL, es = TRUE)
 }
 \arguments{
@@ -18,29 +18,58 @@ drugs.}
 
 \item{query_n}{Integer specifying how many of the top DE gene should be used
 from query_genes. If there are less than query_n genes in common between
-query and drug signatures, the number of common genes will be used.}
+query and drug signatures, the number of common genes will be used.
+Parameter ignored if \code{step} not \code{NULL}.}
 
 \item{drug_n}{Integer specifying how many of the top DE genes should be
 used from drug_genes. If there are less than query_n genes in common
 between query and drug signatures, the number of common genes will be used.}
 
+\item{step}{Integer specifying step size for query range. Queries start
+at 100 genes, and step up by specified step size up to the number of
+common genes.}
+
 \item{es}{Does drug_info contain effect size data? If FALSE, gene ranking
 data is assumed.}
-
-\item{drug_genes}{List of lists (one per drug) with slots 'up' and 'dn' each
-containing a character vector with the names of up- and down-regulated
-genes. If not supplied, created by \code{get_drug_genes}. Useful only if
-multiple calls to \code{get_top_drugs} needed (e.g. in \code{test_ma}).}
 }
 \value{
-data.frame with columns:
-  \item{}{}
-  \item{}{}
-  \item{}{}
-  \item{}{}
-  \item{}{}
+List of data.frames (one per query size) each with columns:
+  \item{drug_n}{Number of drug genes used.}
+  \item{query_n}{Number of query genes used.}
+  \item{overlap}{Number of genes that change in the same direction in drug
+     and query signatures.}
+  \item{cross}{Number of genes that change in the opposite direction in drug
+     and query signatures.}
+  \item{net}{Difference between overlap and cross.}
 }
 \description{
-Get overlap between query and drug signatures.
+Determines the number of genes that change in the same direction between
+query and drug signatures.
+}
+\details{
+Drugs with the largest positive and negative net overlap are predicted to,
+respectively, mimic and reverse the query signature.
+}
+\examples{
+
+# create drug signatures
+genes <- paste("GENE", 1:1000, sep = "_")
+set.seed(0)
+
+drug_info <- data.frame(row.names = genes,
+                        drug1  = rnorm(1000, sd = 2),
+                        drug2  = rnorm(1000, sd = 2),
+                        drug3  = rnorm(1000, sd = 2))
+
+# query signature is drug3
+query_sig <- drug_info$drug3
+names(query_sig) <- genes
+
+res <- query_drugs(query_sig, as.matrix(drug_info))
+}
+\seealso{
+Other query.functions: \code{\link{query_combos}},
+  \code{\link{range_query_combos}},
+  \code{\link{range_query_drugs}}
 }
 
