@@ -142,7 +142,7 @@ add_dprime <- function(diff_exprs) {
 
         for (con in names(diff$top_tables)) {
             #get sample sizes and top table for contrast
-            classes <- pData(diff$eset)$treatment
+            classes <- Biobase::pData(diff$eset)$treatment
             ni <- length(classes[classes == "ctrl"])
             nj <- length(classes[classes == "test"])
 
