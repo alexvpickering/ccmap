@@ -108,7 +108,7 @@ query_combos <- function(query_genes, db_dir,
     names(res) <- ns
 
     #sort results by net overlap
-    res <- lapply(res, function(x) x[order(x$net, decreasing=T), ])
+    res <- lapply(res, function(x) x[order(x$net, decreasing = TRUE), ])
     return(res)
 }
 

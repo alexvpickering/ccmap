@@ -11,7 +11,9 @@ LazyData: TRUE
 RoxygenNote: 5.0.1
 Suggests:
     testthat,
-    lydata
+    lydata,
+    knitr,
+    rmarkdown
 Imports:
     AnnotationDbi,
     Biobase,
@@ -28,5 +30,8 @@ Imports:
     reshape2,
     RSQLite,
     xgboost
-
-
+biocViews:
+    GeneExpression,
+    Transcription,
+    Microarray,
+VignetteBuilder: knitr
