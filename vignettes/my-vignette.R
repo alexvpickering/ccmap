@@ -36,7 +36,6 @@ top_drugs <- query_drugs(query_sig)
 
 head(top_drugs[[1]])
 
-
 ## ----eval=FALSE----------------------------------------------------------
 #  library(ccmap)
 #  
@@ -51,5 +50,4 @@ head(top_drugs[[1]])
 #  # query drug signatures using a range of query gene sizes
 #  # (takes approximately 5 hours using a Intel® Core™ i7-6700K)
 #  range_res <- range_query_combos(query_sig, db_dir)
-#  
 
