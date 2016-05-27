@@ -29,7 +29,7 @@
 #'   \item{net}{Difference between overlap and cross.}
 #' @export
 #'
-#' @examples \dontrun{
+#' @examples
 #' library(crossmeta)
 #' library(lydata)
 #'
@@ -51,8 +51,7 @@
 #' dprimes <- get_dprimes(es)
 #'
 #' # query drug combination database
-#' top_combos <- query_combos(dprimes$meta, db_dir)
-#' }
+#' # top_combos <- query_combos(dprimes$meta, db_dir)
 
 query_combos <- function(query_genes, db_dir,
                         query_n=length(query_genes),
@@ -138,7 +137,7 @@ query_combos <- function(query_genes, db_dir,
 #'    formed by plotting net overlap as a function of query size.
 #' @export
 #'
-#' @examples \dontrun{
+#' @examples
 #' library(crossmeta)
 #' library(lydata)
 #'
@@ -160,8 +159,7 @@ query_combos <- function(query_genes, db_dir,
 #' dprimes <- get_dprimes(es)
 #'
 #' # query drug combination database for range of query sizes
-#' ranges_res <- range_query_combos(dprimes$meta, db_dir)
-#' }
+#' # ranges_res <- range_query_combos(dprimes$meta, db_dir)
 
 range_query_combos <- function(query_genes, db_dir,
                                ncores=parallel::detectCores(), step=100) {

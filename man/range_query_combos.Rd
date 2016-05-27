@@ -40,7 +40,6 @@ mimic and reverse the query signature. Drug combinations may more closely
 mimic or reverse the query signature than individual drugs.
 }
 \examples{
-\dontrun{
 library(crossmeta)
 library(lydata)
 
@@ -62,8 +61,7 @@ es <- es_meta(anals)
 dprimes <- get_dprimes(es)
 
 # query drug combination database for range of query sizes
-ranges_res <- range_query_combos(dprimes$meta, db_dir)
-}
+# ranges_res <- range_query_combos(dprimes$meta, db_dir)
 }
 \seealso{
 Other query.functions: \code{\link{query_combos}},

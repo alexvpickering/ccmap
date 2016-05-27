@@ -34,4 +34,5 @@ biocViews:
     GeneExpression,
     Transcription,
     Microarray,
+    DifferentialExpression
 VignetteBuilder: knitr
