@@ -4,36 +4,34 @@
 \alias{query_drugs}
 \title{Get overlap between query and drug signatures.}
 \usage{
-query_drugs(query_genes, drug_info = NULL, query_n = length(query_genes),
-  drug_n = nrow(drug_info), step = NULL, es = TRUE)
+query_drugs(query_genes, drug_info = NULL, step = NULL,
+  query_n = length(query_genes), drug_n = nrow(drug_info))
 }
 \arguments{
 \item{query_genes}{Named numeric vector of differentual expression values for
 query genes. Usually 'meta' slot of \code{get_dprimes} result.}
 
-\item{drug_info}{Matrix of differential expression values or gene rankings
-(must set es=FALSE) for drugs. Gene rankings should be in increasing order
-(e.g. 1 is the most up or down regulated gene). Rows are genes, columns are
-drugs.}
-
-\item{query_n}{Integer specifying how many of the top DE gene should be used
-from query_genes. If there are less than query_n genes in common between
-query and drug signatures, the number of common genes will be used.
-Parameter ignored if \code{step} not \code{NULL}.}
-
-\item{drug_n}{Integer specifying how many of the top DE genes should be
-used from drug_genes. If there are less than query_n genes in common
-between query and drug signatures, the number of common genes will be used.}
+\item{drug_info}{Matrix of differential expression values for drugs or drug
+combinations. Rows are genes, columns are drugs.}
 
 \item{step}{Integer specifying step size for query range. Queries start
 at 100 genes, and step up by specified step size up to the number of
 common genes.}
 
-\item{es}{Does drug_info contain effect size data? If FALSE, gene ranking
-data is assumed.}
+\item{query_n}{Integer specifying how many of the top DE gene should be used
+from query_genes. If there are less than query_n genes in common between
+query and drug signatures, the number of common genes will be used.
+Parameter ignored if step not NULL.}
+
+\item{drug_n}{Integer specifying how many of the top DE genes should be
+used from drug_genes. If there are less than query_n genes in common
+between query and drug signatures, the number of common genes will be used.}
 }
 \value{
-List of data.frames (one per query size) each with columns:
+If step is not NULL, a data.frame sorted by auc of net overlap vs
+   query size. Columns correspond to query sizes, rows to drugs.
+
+   If step is NULL, a data.frame sorted by net overlap with columns:
   \item{drug_n}{Number of drug genes used.}
   \item{query_n}{Number of query genes used.}
   \item{overlap}{Number of genes that change in the same direction in drug
@@ -68,8 +66,7 @@ names(query_sig) <- genes
 res <- query_drugs(query_sig, as.matrix(drug_info))
 }
 \seealso{
-Other query.functions: \code{\link{query_combos}},
-  \code{\link{range_query_combos}},
-  \code{\link{range_query_drugs}}
+\code{\link{predict_combos}} to get predicted drug combination
+  signatures (can be passed to \code{drug_info}).
 }
 

@@ -106,9 +106,9 @@ library(ccmap)
 top_drugs <- query_drugs(query_sig)
 
 # query drug signatures using a range of query gene sizes
-# range_res <- range_query_drugs(query_sig)
+# range_res <- query_drugs(query_sig, step = 100)
 
-head(top_drugs[[1]])
+head(top_drugs)
 ```
 
 -----------------
@@ -122,8 +122,8 @@ may be promising. For the 1309 drugs in the Connectivity Map build 2, there are
 combinations, but their expression profiles can be predicted using machine 
 learning methods.
 
-In order to do so, a gradient boosted machine was trained using microarray data
-from GEO where single treatments and their combinations were assayed. In total,
+In order to do so, a gradient boosted random forest was trained using microarray
+data from GEO where single treatments and their combinations were assayed. In total,
 96 studies with 163 treatment combinations and almost 7.5 million features were 
 used for training. The final model is most accurate for transcripts with higher 
 absolute standardized effect sizes (figure 2). The model's overall 
@@ -142,22 +142,19 @@ greater than 1.
 
 <br>
 
-To generate the drug combination signatures database requires substantial 
-computing time (approximately 5 days using a Intel® Core™ i7-6700K) and 107GB 
-of free memory. To do so proceeed as follows:
+Predicting all 856086 drug combination signatures would require substantial 
+computing time (about 5 days using a Intel® Core™ i7-6700K) and 107GB of memory.
+Querying all 856086 signatures would take another 5 hours using the same 
+hardware. In practice, the drug combinations that most closely mimic or reverse
+a query signature usually include the top few single drugs. By only predicting
+drug combinations that include the top few single drugs, prediction and query
+times are greatly reduced:
 
 ```{r eval=FALSE}
 library(ccmap)
+# this takes ~12 minutes per drug in 'with'
+drug_combos <- predict_combos(with = c("LY-294002", "dilazep"))
 
-# make drug combination data base
-make_drug_combos()
-
-db_dir <- "/path/to/drug_combos.sqlite"
-
-# query drug combination signatures using all common genes
-top_combos <- query_combos(query_sig, db_dir)
-
-# query drug signatures using a range of query gene sizes
-# (takes approximately 5 hours using a Intel® Core™ i7-6700K)
-range_res <- range_query_combos(query_sig, db_dir)
+# query drug combination signatures using a range of query gene sizes
+range_res <- query_drugs(query_sig, drug_combos, step = 100)
 ```

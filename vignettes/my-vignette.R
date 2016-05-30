@@ -32,22 +32,15 @@ library(ccmap)
 top_drugs <- query_drugs(query_sig)
 
 # query drug signatures using a range of query gene sizes
-# range_res <- range_query_drugs(query_sig)
+# range_res <- query_drugs(query_sig, step = 100)
 
-head(top_drugs[[1]])
+head(top_drugs)
 
 ## ----eval=FALSE----------------------------------------------------------
 #  library(ccmap)
+#  # this takes ~12 minutes per drug in 'with'
+#  drug_combos <- predict_combos(with = c("LY-294002", "dilazep"))
 #  
-#  # make drug combination data base
-#  make_drug_combos()
-#  
-#  db_dir <- "/path/to/drug_combos.sqlite"
-#  
-#  # query drug combination signatures using all common genes
-#  top_combos <- query_combos(query_sig, db_dir)
-#  
-#  # query drug signatures using a range of query gene sizes
-#  # (takes approximately 5 hours using a Intel® Core™ i7-6700K)
-#  range_res <- range_query_combos(query_sig, db_dir)
+#  # query drug combination signatures using a range of query gene sizes
+#  range_res <- query_drugs(query_sig, drug_combos, step = 100)
 

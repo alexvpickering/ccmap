@@ -62,11 +62,7 @@ get_dprimes <- function(es) {
 #   \item{up}{Named vector of genes up-regulated by drug.}
 #   \item{up}{Named vector of genes down-regulated by drug.}
 
-get_drug_genes <- function(drug_info, query_genes,
-                           drug_n=nrow(drug_info), es=TRUE) {
-
-    #fix for my drug_combos.sqlite (remove if re-create)
-    row.names(drug_info) <- toupper(row.names(drug_info))
+get_drug_genes <- function(drug_info, query_genes, drug_n=nrow(drug_info)) {
 
     drug_genes <- list()
     drugs <- colnames(drug_info)
@@ -80,22 +76,11 @@ get_drug_genes <- function(drug_info, query_genes,
         drug_n <- nrow(drug_info)
     }
     for (drug in drugs) {
-        if (es) {
-            #get up/dn for each drug
-            dr <- drug_info[, drug]
-            updn <- get_updn(dr, drug_n)
 
-            up <- updn$up
-            dn <- updn$dn
-        } else {
-            dr <- sort(drug_info[, drug])
-
-            up <- names (head(dr, drug_n / 2))
-            dn <- names (tail(dr, drug_n / 2))
-        }
-        #up/dn regulated
-        top_list <- list(up=up, dn=dn)
-        drug_genes[[drug]] <- top_list
+        #get up/dn for each drug
+        dr <- drug_info[, drug]
+        updn <- get_updn(dr, drug_n)
+        drug_genes[[drug]] <- updn
     }
     return(drug_genes)
 }
@@ -154,19 +139,21 @@ get_updn <- function (genes, genes_n) {
         #take more genes from dn
         n_up <- length(up)
         n_dn <- genes_n - length(up)
+
     } else if (length(dn) < genes_n / 2 &
                length(up) > genes_n / 2) {
         #take more genes from up
         n_up <- genes_n - length(dn)
         n_dn <- length(dn)
+
     } else {
         #take genes_n / 2 from up and dn
         n_up <- genes_n / 2
         n_dn <- genes_n / 2
     }
     #get n_up, n_dn from up/dn list
-    up <- head(up, n_up)
-    dn <- tail(dn, n_dn)
+    up <- utils::head(up, n_up)
+    dn <- utils::tail(dn, n_dn)
 
     return(list(up=up, dn=dn))
 }
