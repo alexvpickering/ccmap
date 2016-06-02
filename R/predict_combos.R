@@ -13,16 +13,25 @@
 #' @seealso \code{\link{query_drugs}} to determine overlap between query and
 #'    predicted drug combination signatures.
 #'
-#' @return drug_info Matrix of differential expression values for drugs or drug
+#' @return drug_info Matrix of differential expression values for drug
 #'   combinations. Rows are genes, columns are drugs.
 #' @export
 #'
 #' @examples
-#' # combos_info <- predict_combos("staurosporine")
+#' # this returns NULL:
+#' combos_info <- predict_combos("cmap_drug")
+#'
+#'
+#' # predicted expression values for combined treatment with sirolimus
+#' # and all other cmap drugs:
+#' # combos_info <- predict_combos("sirolimus")
 
 predict_combos <- function(with) {
 
     # Setup -------------------------
+    drugs <- colnames(ccdata::cmap_es)
+    if (FALSE %in% (with %in% drugs))
+        message("Drugs in 'with' not found."); return(NULL)
 
     #load model & cmap tables
     combo_model  <- ccdata::combo_model
@@ -30,10 +39,6 @@ predict_combos <- function(with) {
     cmap_tables1 <- ccdata::cmap_tables1
     cmap_tables2 <- ccdata::cmap_tables2
     cmap_tables  <- c(cmap_tables1, cmap_tables2)
-
-    drugs  <- names(cmap_tables)
-    if (FALSE %in% (with %in% drugs))
-        stop("Drugs in 'with' not found.")
 
     drugs  <- drugs[!drugs %in% with]
     probes <- row.names(cmap_tables[[1]])

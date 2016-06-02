@@ -10,7 +10,7 @@ predict_combos(with)
 \item{with}{Character vector of drug names to combine cmap drugs with.}
 }
 \value{
-drug_info Matrix of differential expression values for drugs or drug
+drug_info Matrix of differential expression values for drug
   combinations. Rows are genes, columns are drugs.
 }
 \description{
@@ -23,7 +23,13 @@ a query signature can usually be determined by querying against drug
 combination signatures predicted with the top few single drugs.
 }
 \examples{
-# combos_info <- predict_combos("staurosporine")
+# this returns NULL:
+combos_info <- predict_combos("cmap_drug")
+
+
+# predicted expression values for combined treatment with sirolimus
+# and all other cmap drugs:
+# combos_info <- predict_combos("sirolimus")
 }
 \seealso{
 \code{\link{query_drugs}} to determine overlap between query and

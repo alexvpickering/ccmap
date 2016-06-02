@@ -127,10 +127,10 @@ data from GEO where single treatments and their combinations were assayed. In to
 96 studies with 163 treatment combinations and almost 7.5 million features were 
 used for training. The final model is most accurate for transcripts with higher 
 absolute standardized effect sizes (figure 2). The model's overall 
-classification accuracy is 76.9% (assessed on out-of-fold data). This is a 
+classification accuracy is 76.64% (assessed on out-of-fold data). This is a 
 modest improvement over some simple benchmark models. For example, predicting 
 that the combination treatment effect is an average of the two treatments is 
-76.0% accurate. 
+76.18% accurate. 
 
 ![](accuracy.png)
 
