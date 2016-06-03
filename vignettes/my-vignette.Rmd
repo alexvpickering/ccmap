@@ -1,11 +1,14 @@
 ---
 title: "Combination Connectivity Mapping"
-output: html_document
-vignette: >
-  %\VignetteIndexEntry{ccmap vignette}
-  %\VignetteEngine{knitr::rmarkdown}
-  %\VignetteEncoding{UTF-8}  
+output:
+  html_document:
+    theme: flatly
 ---
+<!--
+%\VignetteEngine{knitr::rmarkdown}
+%\VignetteIndexEntry{ccmap vignette}
+-->
+
 
 `ccmap` finds drugs and drug combinations that are predicted to reverse or
 mimic gene expression signatures. These drugs might reverse diseases or mimic 
@@ -36,7 +39,7 @@ values where the names correspond to uppercase HGNC symbols. If you used
 `crossmeta`, proceeed as follows:
 
 
-```{r}
+```{r, message=FALSE, warning=FALSE}
 library(crossmeta)
 library(ccmap)
 library(lydata)
@@ -50,6 +53,9 @@ anals <- load_diff(gse_names, data_dir)
 
 # run meta-analysis
 es <- es_meta(anals)
+
+# contribute your signature to our public meta-analysis database
+# contribute(anals, subject = "LY-294002")
 
 # extract moderated adjusted standardized effect sizes
 dprimes <- get_dprimes(es)
@@ -74,7 +80,7 @@ used by `GeneMeta` to calculate moderated unbiased standardised effect sizes.
 
 The final drug signatures are available in the `ccdata` package.
 
-```{r}
+```{r, message=FALSE, warning=FALSE}
 library(ccdata)
 
 # load drug signatures
@@ -99,7 +105,7 @@ plotting net overlap as a function of query size. This auc metric has the
 advantage of weighting query genes according to their extent of differential 
 expression. 
 
-```{r}
+```{r, message=FALSE, warning=FALSE}
 library(ccmap)
 
 # query drug signatures using all common genes
@@ -128,9 +134,9 @@ data from GEO where single treatments and their combinations were assayed. In to
 used for training. The final model is most accurate for transcripts with higher 
 absolute standardized effect sizes (figure 2). The model's overall 
 classification accuracy is 76.64% (assessed on out-of-fold data). This is a 
-modest improvement over some simple benchmark models. For example, predicting 
+slight improvement over some simple benchmark models. For example, predicting 
 that the combination treatment effect is an average of the two treatments is 
-76.18% accurate. 
+76.19% accurate. 
 
 ![](accuracy.png)
 
@@ -143,7 +149,7 @@ greater than 1.
 <br>
 
 Predicting all 856086 drug combination signatures would require substantial 
-computing time (about 5 days using a Intel® Core™ i7-6700K) and 107GB of memory.
+computing time (about 2.5 days using a Intel Core i7-6700K) and 107GB of memory.
 Querying all 856086 signatures would take another 5 hours using the same 
 hardware. In practice, the drug combinations that most closely mimic or reverse
 a query signature usually include the top few single drugs. By only predicting
@@ -152,7 +158,7 @@ times are greatly reduced:
 
 ```{r eval=FALSE}
 library(ccmap)
-# this takes ~12 minutes per drug in 'with'
+# this takes ~6 minutes per drug in 'with'
 drug_combos <- predict_combos(with = c("LY-294002", "dilazep"))
 
 # query drug combination signatures using a range of query gene sizes

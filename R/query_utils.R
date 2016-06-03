@@ -14,7 +14,7 @@
 #'      unbiased effect sizes for all measured genes.}
 #' @export
 #'
-#' @seealso \code{\link{es_meta}}.
+#' @seealso \code{\link[crossmeta]{es_meta}}.
 #' @examples
 #' library(crossmeta)
 #' library(lydata)

@@ -42,6 +42,6 @@ es <- es_meta(anals)
 dprimes <- get_dprimes(es)
 }
 \seealso{
-\code{\link{es_meta}}.
+\code{\link[crossmeta]{es_meta}}.
 }
 

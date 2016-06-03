@@ -30,15 +30,14 @@ predict_combos <- function(with) {
 
     # Setup -------------------------
     drugs <- colnames(ccdata::cmap_es)
-    if (FALSE %in% (with %in% drugs))
-        message("Drugs in 'with' not found."); return(NULL)
+    if (FALSE %in% (with %in% drugs)) {
+        message("Drugs in 'with' not found.")
+        return(NULL)
+    }
 
     #load model & cmap tables
     combo_model  <- ccdata::combo_model
-
-    cmap_tables1 <- ccdata::cmap_tables1
-    cmap_tables2 <- ccdata::cmap_tables2
-    cmap_tables  <- c(cmap_tables1, cmap_tables2)
+    cmap_tables <- ccdata::cmap_tables
 
     drugs  <- drugs[!drugs %in% with]
     probes <- row.names(cmap_tables[[1]])
@@ -47,7 +46,7 @@ predict_combos <- function(with) {
     pairs <- expand.grid(with, drugs, stringsAsFactors = FALSE)
 
     #load annotation information
-    hgu133a <- crossmeta:::get_biocpack("hgu133a.db")
+    hgu133a <- get_biocpack("hgu133a.db")
     suppressMessages(map <- AnnotationDbi::select(hgu133a, probes, "SYMBOL"))
     map <- map[!is.na(map$SYMBOL),]
     map$SYMBOL <- toupper(map$SYMBOL)
@@ -74,15 +73,15 @@ predict_combos <- function(with) {
         colnames(X) <- c(d1_cols, d2_cols)
 
         #make predictions with combo_model
-        probe_preds <- xgboost:::predict.xgb.Booster(combo_model, X)
+        probe_preds <- xgboost::predict(combo_model, X)
 
         #predict using reverse order
         colnames(X) <- c(d2_cols, d1_cols)
         X <- X[, c(d1_cols, d2_cols)]
-        probe_preds_rev <- xgboost:::predict.xgb.Booster(combo_model, X)
+        probe_preds_rev <- xgboost::predict(combo_model, X)
 
         #get average then multiply by 1.5 (model correction factor)
-        probe_preds <- (probe_preds + probe_preds_rev) / 2 * 1.5
+        probe_preds <- (probe_preds + probe_preds_rev) / 2 * 1.623
 
         #probe_preds vector to df
         probe_preds <- as.data.frame(probe_preds)
@@ -115,4 +114,26 @@ predict_combos <- function(with) {
         i <- i + 1
     }
     return(as.matrix(drug_info))
+}
+
+
+#---------------
+
+
+# Downloads bioconductor package.
+#
+# Used by symbol_annot to download annotation data packages from bioconductor.
+#
+# @param biocpack_name String specifying bioconductor package to download.
+#
+# @seealso \link{get_biocpack_name}, \link{symbol_annot}.
+# @return NULL (downloads and loads requested package).
+
+get_biocpack <- function(biocpack_name) {
+
+    if (!requireNamespace(biocpack_name, quietly = TRUE)) {
+        BiocInstaller::biocLite(biocpack_name)
+    }
+    db <- get(biocpack_name, getNamespace(biocpack_name))
+    return (db)
 }

@@ -1,4 +1,4 @@
-## ------------------------------------------------------------------------
+## ---- message=FALSE, warning=FALSE---------------------------------------
 library(crossmeta)
 library(ccmap)
 library(lydata)
@@ -13,19 +13,22 @@ anals <- load_diff(gse_names, data_dir)
 # run meta-analysis
 es <- es_meta(anals)
 
+# contribute your signature to our public meta-analysis database
+# contribute(anals, subject = "LY-294002")
+
 # extract moderated adjusted standardized effect sizes
 dprimes <- get_dprimes(es)
 
 # query signature
 query_sig <- dprimes$meta
 
-## ------------------------------------------------------------------------
+## ---- message=FALSE, warning=FALSE---------------------------------------
 library(ccdata)
 
 # load drug signatures
 data(cmap_es)
 
-## ------------------------------------------------------------------------
+## ---- message=FALSE, warning=FALSE---------------------------------------
 library(ccmap)
 
 # query drug signatures using all common genes
@@ -38,7 +41,7 @@ head(top_drugs)
 
 ## ----eval=FALSE----------------------------------------------------------
 #  library(ccmap)
-#  # this takes ~12 minutes per drug in 'with'
+#  # this takes ~6 minutes per drug in 'with'
 #  drug_combos <- predict_combos(with = c("LY-294002", "dilazep"))
 #  
 #  # query drug combination signatures using a range of query gene sizes
