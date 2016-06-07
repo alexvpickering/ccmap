@@ -57,9 +57,14 @@
 
 query_drugs <- function(query_genes, drug_info = NULL, step = NULL,
                         query_n = length(query_genes), drug_n = nrow(drug_info)) {
+    #bind global
+    cmap_es = NULL
 
     #default to cmap_es for drug_info
-    if (is.null(drug_info)) drug_info <- ccdata::cmap_es
+    if (is.null(drug_info)) {
+        utils::data("cmap_es", package = "ccdata", envir = environment())
+        drug_info <- cmap_es
+    }
 
     #get top up/dn drug genes
     drug_genes <- get_drug_genes(drug_info, query_genes, drug_n)

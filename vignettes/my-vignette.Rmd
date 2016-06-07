@@ -20,10 +20,12 @@ healthy lifestyles.
 
 To obtain a query gene expression signature, it is reccommended that you perform a 
 meta-analysis of all gene expression studies that have compared similar groups.
-This approach improves the rankings of the correct drugs when the query signatures
-are from independent gene expression data for that same drug (figure 1).
-This can be accomplished with the 
-[**crossmeta**](https://github.com/alexvpickering/crossmeta) package.
+This can be accomplished with the [**crossmeta**](https://github.com/alexvpickering/crossmeta) package.
+
+This meta-analysis approach was validated by querying the cmap drug signatures 
+using independant drug expression data. Query signatures from meta-analyses have 
+improved rankings of the selfsame cmap drugs (figure 1).
+
 
 ![](meta-vs-cons.png)
 

@@ -28,16 +28,20 @@
 
 predict_combos <- function(with) {
 
+    #bind global variables
+    cmap_es = cmap_tables = combo_model = NULL
+
     # Setup -------------------------
-    drugs <- colnames(ccdata::cmap_es)
+    utils::data("cmap_es", package = "ccdata", envir = environment())
+    drugs <- colnames(cmap_es)
     if (FALSE %in% (with %in% drugs)) {
         message("Drugs in 'with' not found.")
         return(NULL)
     }
 
     #load model & cmap tables
-    combo_model  <- ccdata::combo_model
-    cmap_tables <- ccdata::cmap_tables
+    utils::data("combo_model", package = "ccdata", envir = environment())
+    utils::data("cmap_tables", package = "ccdata", envir = environment())
 
     drugs  <- drugs[!drugs %in% with]
     probes <- row.names(cmap_tables[[1]])

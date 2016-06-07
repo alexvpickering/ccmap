@@ -1,10 +1,10 @@
 Package: ccmap
 Type: Package
 Title: Combination Connectivity Mapping
-Version: 0.99.1
+Version: 0.99.3
 Author: Alex Pickering
 Maintainer: Alex Pickering <alexvpickering@gmail.com>
-Description: finds drugs and drug combinations that are predicted to reverse or
+Description: Finds drugs and drug combinations that are predicted to reverse or
     mimic gene expression signatures. These drugs might reverse diseases or mimic
      healthy lifestyles.
 License: MIT + file LICENSE
@@ -20,13 +20,11 @@ Suggests:
 Imports:
     AnnotationDbi,
     Biobase,
-    BiocGenerics,
     BiocInstaller,
     ccdata,
     data.table,
     MESS,
     metaMA,
-    methods,
     xgboost
 biocViews:
     GeneExpression,
