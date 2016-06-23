@@ -138,6 +138,8 @@ $(document).ready(function () {
 <p>To use <code>ccmap</code>, the query signature needs to be a named vector of effect size values where the names correspond to uppercase HGNC symbols. If you used <code>crossmeta</code>, proceeed as follows:</p>
 <pre class="r"><code>library(crossmeta)
 library(ccmap)
+
+# microarray data from studies using drug LY-294002
 library(lydata)
 data_dir &lt;- system.file(&quot;extdata&quot;, package = &quot;lydata&quot;)
 
@@ -172,24 +174,17 @@ data(cmap_es)</code></pre>
 </div>
 <div id="querying-drug-signatures" class="section level3">
 <h3>Querying Drug Signatures</h3>
-<p>Genes from query and drug signatures are classified as up or down regulated based on the sign of their effect sizes. Overlap between query and drug signatures are then calculated by determining the number of genes that are regulated in the same direction. Net overlap is also calculated as the difference between overlapping genes and genes regulated in the opposite direction between query and drug signatures.</p>
-<p>The number of query and drug signature genes can be chosen. If so, only the top most differentially expressed genes are used. Alternatively, a range of query sizes can be used and drugs ranked based on the area under the curve formed by plotting net overlap as a function of query size. This auc metric has the advantage of weighting query genes according to their extent of differential expression.</p>
+<p>Genes from query and drug signatures are ranked based on their absolute effect sizes and then classified as up or down regulated based on the sign of their effect sizes. Net overlap (z), defined as the difference between up and down regulated genes, is then calculated as a function of drug and query gene ranks (x and y). The volume under the surface (vos) formed by plotting z as a function of x and y is used for the final drug rankings. This vos metric has the advantage of weighting both query and drug genes according to their extent of differential expression.</p>
 <pre class="r"><code>library(ccmap)
-
-# query drug signatures using all common genes
 top_drugs &lt;- query_drugs(query_sig)
 
-# query drug signatures using a range of query gene sizes
-# range_res &lt;- query_drugs(query_sig, step = 100)
-
+# correctly identifies LY-294002 as best match among drug signatures
+# other PI3K inhibitors are also identified among top matching drugs
 head(top_drugs)</code></pre>
-<pre><code>##               drug_n query_n overlap cross  net
-## LY-294002      13314   13314    8085  5229 2856
-## dilazep        13314   13314    7606  5708 1898
-## 0297417-0002B  13314   13314    7567  5747 1820
-## sirolimus      13314   13314    7523  5791 1732
-## quinostatin    13314   13314    7483  5831 1652
-## wortmannin     13314   13314    7470  5844 1626</code></pre>
+<pre><code>##     LY-294002     sirolimus 0297417-0002B    wortmannin       dilazep 
+##     0.3670637     0.2340641     0.2299859     0.2181255     0.2158558 
+##   resveratrol 
+##     0.2024707</code></pre>
 <hr />
 </div>
 <div id="drug-combinations" class="section level3">
@@ -202,13 +197,13 @@ head(top_drugs)</code></pre>
 </div>
 <p>Figure 2. Transcripts with higher absolute standardized effect sizes for treatment combinations are classified more accurately. A gradient boosted random forest model in comparison to a a benchmark model where single treatments are averaged. For reference, about 40% of the data had an absolute effect size greater than 1.</p>
 <p><br></p>
-<p>Predicting all 856086 drug combination signatures would require substantial computing time (about 2.5 days using a Intel Core i7-6700K) and 107GB of memory. Querying all 856086 signatures would take another 5 hours using the same hardware. In practice, the drug combinations that most closely mimic or reverse a query signature usually include the top few single drugs. By only predicting drug combinations that include the top few single drugs, prediction and query times are greatly reduced:</p>
+<p>Predicting all 856086 drug combination signatures would require substantial computing time (about 2.5 days using a Intel Core i7-6700K) and 107GB of memory. In practice, the drug combinations that most closely mimic or reverse a query signature usually include the top few single drugs. By only predicting drug combinations that include the top few single drugs, prediction and query times are greatly reduced:</p>
 <pre class="r"><code>library(ccmap)
 # this takes ~6 minutes per drug in 'with'
 drug_combos &lt;- predict_combos(with = c(&quot;LY-294002&quot;, &quot;dilazep&quot;))
 
 # query drug combination signatures using a range of query gene sizes
-range_res &lt;- query_drugs(query_sig, drug_combos, step = 100)</code></pre>
+range_res &lt;- query_drugs(query_sig, drug_combos)</code></pre>
 </div>
 
 

@@ -1,40 +1,28 @@
 #' Get overlap between query and drug signatures.
 #'
-#' Determines the number of genes that change in the same direction between
-#' query and drug signatures.
+#' Determines the volume under the surface formed by plotting net overlaps (z)
+#' as a function of number of drug and query genes (x and y).
 #'
 #' Drugs with the largest positive and negative net overlap are predicted to,
-#' respectively, mimic and reverse the query signature.
+#' respectively, mimic and reverse the query signature. A value of 1 would indicate
+#' that all drug and query genes are regulated in the same direction and with
+#' the same rankings within their signatures. A value of -1 would indicate
+#' that all drug and query genes are regulated in the opposite direction and with
+#' the same rankings within their signatures.
+#'
+#' @import foreach
 #'
 #' @param query_genes Named numeric vector of differentual expression values for
 #'   query genes. Usually 'meta' slot of \code{get_dprimes} result.
 #' @param drug_info Matrix of differential expression values for drugs or drug
 #'   combinations. Rows are genes, columns are drugs.
-#' @param query_n Integer specifying how many of the top DE gene should be used
-#'   from query_genes. If there are less than query_n genes in common between
-#'   query and drug signatures, the number of common genes will be used.
-#'   Parameter ignored if step not NULL.
-#' @param drug_n Integer specifying how many of the top DE genes should be
-#'   used from drug_genes. If there are less than query_n genes in common
-#'   between query and drug signatures, the number of common genes will be used.
-#' @param step Integer specifying step size for query range. Queries start
-#'    at 100 genes, and step up by specified step size up to the number of
-#'    common genes.
 #'
 #' @seealso \code{\link{predict_combos}} to get predicted drug combination
 #'   signatures (can be passed to \code{drug_info}).
 #'
-#' @return If step is not NULL, a data.frame sorted by auc of net overlap vs
-#'    query size. Columns correspond to query sizes, rows to drugs.
+#' @return Vector of numeric values between 1 and -1 indicating extent of overlap
+#'   between query and drug signatures (see details).
 #'
-#'    If step is NULL, a data.frame sorted by net overlap with columns:
-#'   \item{drug_n}{Number of drug genes used.}
-#'   \item{query_n}{Number of query genes used.}
-#'   \item{overlap}{Number of genes that change in the same direction in drug
-#'      and query signatures.}
-#'   \item{cross}{Number of genes that change in the opposite direction in drug
-#'      and query signatures.}
-#'   \item{net}{Difference between overlap and cross.}
 #' @export
 #'
 #' @examples
@@ -55,50 +43,84 @@
 #' res <- query_drugs(query_sig, as.matrix(drug_info))
 
 
-query_drugs <- function(query_genes, drug_info = NULL, step = NULL,
-                        query_n = length(query_genes), drug_n = nrow(drug_info)) {
-    #bind global
+query_drugs <- function(query_genes, drug_info = NULL) {
+    # bind global
     cmap_es = NULL
 
-    #default to cmap_es for drug_info
+    # default to cmap_es for drug_info
     if (is.null(drug_info)) {
         utils::data("cmap_es", package = "ccdata", envir = environment())
         drug_info <- cmap_es
+        rm(cmap_es)
     }
 
-    #get top up/dn drug genes
-    drug_genes <- get_drug_genes(drug_info, query_genes, drug_n)
+    # use only common genes
+    drug_info   <- drug_info[row.names(drug_info) %in% names(query_genes), ]
+    query_genes <- query_genes[row.names(drug_info)]
 
-    if (!is.null(step)) {
-        #setup range of query sizes
-        max_n <- length(unlist(drug_genes[[1]]))
-        query_n <- round(seq(100, round(max_n, -2), step))
-        query_n[length(query_n)] <- max_n
+    # get gene ranking for drugs and query
+    drug_ranks  <- apply(-abs(drug_info), 2, rank, ties.method = "first")
+    query_ranks <- rank(-abs(query_genes), ties.method = "first")
+
+
+    # transform expression data to binary
+    drug_info <- sign(drug_info)
+    query_genes <- sign(query_genes)
+
+    # get direction of overlap
+    drug_info <- apply(drug_info, 2, function(col) col * query_genes)
+
+    # get volumes under surfaces of net overlaps (z) as a function of number of
+    # drug and query genes (x and y)
+    ncores <- parallel::detectCores()
+    ngenes <- nrow(drug_info)
+    ndrugs <- ncol(drug_info)
+    step <- ndrugs %/% ncores
+
+    cuts <- seq(1, ndrugs, ifelse(step == 0, 1, step))
+    cuts[length(cuts)] <- ndrugs + 1
+    volmax <- sum_rowcolCumsum(x = rep(1, ngenes),
+                               i = seq(1, ngenes),
+                               j = seq(1, ngenes))
+
+    doMC::registerDoMC(ncores)
+    vols <- foreach(col=1:ndrugs, .combine=c) %dopar% {
+        sum_rowcolCumsum(x = drug_info[, col],
+                         i = query_ranks,
+                         j = drug_ranks[, col])
     }
 
-    #get overlap df for each query_n
-    top_drugs <- list()
+    names(vols) <- colnames(drug_info)
+    return(sort(vols, TRUE) / volmax)
+}
 
-    for (n in query_n) {
-        #get up/dn query genes
-        q_genes <- setup_query_genes(query_genes, n, drug_info)
 
-        #determine direct overlap
-        overlap <- get_overlap(drug_genes, q_genes)
+#--------------------------------
 
-        #calculate cross and net overlap
-        overlap$cross <- overlap$query_n - overlap$overlap
-        overlap$net   <- overlap$overlap - overlap$cross
 
-        #sort rows and reorder columns
-        overlap <- overlap[order(overlap$net, decreasing=TRUE),
-                           c("drug_n", "query_n", "overlap", "cross", "net")]
+#' Sum of cumulative sum computed over rows then columns of matrix.
+#'
+#' Equivalent to computing the cumulative sum of a matrix over rows, then
+#' over columns, then suming every value (though much more fast and memory
+#' efficient).
+#'
+#' @param x Numeric vector of non-zero values of matrix.
+#' @param i Integer vector of row indices of x.
+#' @param j Integer vector of column indices of x.
+#'
+#' @return Numeric value equal to the sum of the cumulative sum computed over
+#'    rows then columns of a matrix.
+#' @export
+#'
+#' @examples
+#' x <- c(1, 1, 1, -1) # non-zero values of matrix
+#' i <- c(1, 2, 3, 4)  # row indices of x
+#' j <- c(4, 1, 3, 2)  # col indices of x
+#'
+#' sum_rowcolCumsum(x, i, j)
 
-        used_n <- as.character(overlap$query_n[1])
-        top_drugs[[used_n]] <- overlap
-    }
-
-    if (is.null(step)) return(top_drugs[[1]])
-
-    return(get_range_res(top_drugs))
+sum_rowcolCumsum <- function(x, i, j) {
+    ni <- max(i)
+    nj <- max(j)
+    sum(x * (ni - i + 1) * (nj - j + 1))
 }

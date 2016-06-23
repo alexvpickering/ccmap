@@ -3,4 +3,6 @@
 export(get_dprimes)
 export(predict_combos)
 export(query_drugs)
+export(sum_rowcolCumsum)
 import(data.table)
+import(foreach)

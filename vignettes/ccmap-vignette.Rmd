@@ -44,6 +44,8 @@ values where the names correspond to uppercase HGNC symbols. If you used
 ```{r, message=FALSE, warning=FALSE}
 library(crossmeta)
 library(ccmap)
+
+# microarray data from studies using drug LY-294002
 library(lydata)
 data_dir <- system.file("extdata", package = "lydata")
 
@@ -93,29 +95,21 @@ data(cmap_es)
 
 ###Querying Drug Signatures
 
-Genes from query and drug signatures are classified as up or down regulated 
-based on the sign of their effect sizes. Overlap between query and drug signatures
-are then calculated by determining the number of genes that are regulated in the
-same direction. Net overlap is also calculated as the difference between 
-overlapping genes and genes regulated in the opposite direction between query and
-drug signatures.
-
-The number of query and drug signature genes can be chosen. If so, only the top
-most differentially expressed genes are used. Alternatively, a range of query 
-sizes can be used and drugs ranked based on the area under the curve formed by
-plotting net overlap as a function of query size. This auc metric has the 
-advantage of weighting query genes according to their extent of differential 
-expression. 
+Genes from query and drug signatures are ranked based on their absolute effect
+sizes and then classified as up or down regulated based on the sign of their 
+effect sizes. Net overlap (z), defined as the difference between up and down
+regulated genes, is then calculated as a function of drug and query gene ranks 
+(x and y). The volume under the surface (vos) formed by plotting z as a function 
+of x and y is used for the final drug rankings. This vos metric has the 
+advantage of weighting both query and drug genes according to their extent of 
+differential expression. 
 
 ```{r, message=FALSE, warning=FALSE}
 library(ccmap)
-
-# query drug signatures using all common genes
 top_drugs <- query_drugs(query_sig)
 
-# query drug signatures using a range of query gene sizes
-# range_res <- query_drugs(query_sig, step = 100)
-
+# correctly identifies LY-294002 as best match among drug signatures
+# other PI3K inhibitors are also identified among top matching drugs
 head(top_drugs)
 ```
 
@@ -152,11 +146,10 @@ greater than 1.
 
 Predicting all 856086 drug combination signatures would require substantial 
 computing time (about 2.5 days using a Intel Core i7-6700K) and 107GB of memory.
-Querying all 856086 signatures would take another 5 hours using the same 
-hardware. In practice, the drug combinations that most closely mimic or reverse
-a query signature usually include the top few single drugs. By only predicting
-drug combinations that include the top few single drugs, prediction and query
-times are greatly reduced:
+In practice, the drug combinations that most closely mimic or reverse a query 
+signature usually include the top few single drugs. By only predicting drug 
+combinations that include the top few single drugs, prediction and query times
+are greatly reduced:
 
 ```{r eval=FALSE}
 library(ccmap)
@@ -164,5 +157,5 @@ library(ccmap)
 drug_combos <- predict_combos(with = c("LY-294002", "dilazep"))
 
 # query drug combination signatures using a range of query gene sizes
-range_res <- query_drugs(query_sig, drug_combos, step = 100)
+range_res <- query_drugs(query_sig, drug_combos)
 ```

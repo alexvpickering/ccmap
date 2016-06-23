@@ -4,8 +4,7 @@
 \alias{query_drugs}
 \title{Get overlap between query and drug signatures.}
 \usage{
-query_drugs(query_genes, drug_info = NULL, step = NULL,
-  query_n = length(query_genes), drug_n = nrow(drug_info))
+query_drugs(query_genes, drug_info = NULL)
 }
 \arguments{
 \item{query_genes}{Named numeric vector of differentual expression values for
@@ -13,40 +12,22 @@ query genes. Usually 'meta' slot of \code{get_dprimes} result.}
 
 \item{drug_info}{Matrix of differential expression values for drugs or drug
 combinations. Rows are genes, columns are drugs.}
-
-\item{step}{Integer specifying step size for query range. Queries start
-at 100 genes, and step up by specified step size up to the number of
-common genes.}
-
-\item{query_n}{Integer specifying how many of the top DE gene should be used
-from query_genes. If there are less than query_n genes in common between
-query and drug signatures, the number of common genes will be used.
-Parameter ignored if step not NULL.}
-
-\item{drug_n}{Integer specifying how many of the top DE genes should be
-used from drug_genes. If there are less than query_n genes in common
-between query and drug signatures, the number of common genes will be used.}
 }
 \value{
-If step is not NULL, a data.frame sorted by auc of net overlap vs
-   query size. Columns correspond to query sizes, rows to drugs.
-
-   If step is NULL, a data.frame sorted by net overlap with columns:
-  \item{drug_n}{Number of drug genes used.}
-  \item{query_n}{Number of query genes used.}
-  \item{overlap}{Number of genes that change in the same direction in drug
-     and query signatures.}
-  \item{cross}{Number of genes that change in the opposite direction in drug
-     and query signatures.}
-  \item{net}{Difference between overlap and cross.}
+Vector of numeric values between 1 and -1 indicating extent of overlap
+  between query and drug signatures (see details).
 }
 \description{
-Determines the number of genes that change in the same direction between
-query and drug signatures.
+Determines the volume under the surface formed by plotting net overlaps (z)
+as a function of number of drug and query genes (x and y).
 }
 \details{
 Drugs with the largest positive and negative net overlap are predicted to,
-respectively, mimic and reverse the query signature.
+respectively, mimic and reverse the query signature. A value of 1 would indicate
+that all drug and query genes are regulated in the same direction and with
+the same rankings within their signatures. A value of -1 would indicate
+that all drug and query genes are regulated in the opposite direction and with
+the same rankings within their signatures.
 }
 \examples{
 
