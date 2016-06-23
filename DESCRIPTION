@@ -23,7 +23,6 @@ Imports:
     BiocInstaller,
     ccdata,
     data.table,
-    MESS,
     metaMA,
     xgboost
 biocViews:

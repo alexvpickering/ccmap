@@ -97,12 +97,12 @@ data(cmap_es)
 
 Genes from query and drug signatures are ranked based on their absolute effect
 sizes and then classified as up or down regulated based on the sign of their 
-effect sizes. Net overlap (z), defined as the difference between up and down
-regulated genes, is then calculated as a function of drug and query gene ranks 
-(x and y). The volume under the surface (vos) formed by plotting z as a function 
-of x and y is used for the final drug rankings. This vos metric has the 
-advantage of weighting both query and drug genes according to their extent of 
-differential expression. 
+effect sizes. Net overlap (z), defined as the difference between the number of
+genes regulated in the same and opposite directions, is then calculated as a
+function of drug and query gene ranks (x and y). The volume under the surface 
+(vos) formed by plotting z as a function of x and y is used for the final drug 
+rankings. This vos metric has the advantage of weighting both query and drug 
+genes according to their extent of differential expression. 
 
 ```{r, message=FALSE, warning=FALSE}
 library(ccmap)
@@ -148,8 +148,8 @@ Predicting all 856086 drug combination signatures would require substantial
 computing time (about 2.5 days using a Intel Core i7-6700K) and 107GB of memory.
 In practice, the drug combinations that most closely mimic or reverse a query 
 signature usually include the top few single drugs. By only predicting drug 
-combinations that include the top few single drugs, prediction and query times
-are greatly reduced:
+combinations that include the top few single drugs, memory requirements and 
+prediction times are greatly reduced:
 
 ```{r eval=FALSE}
 library(ccmap)

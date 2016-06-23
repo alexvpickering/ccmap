@@ -25,7 +25,7 @@ names(query_sig) <- genes
 test_that("Drug queries identify drug3 as best match", {
 
     top_drugs <- query_drugs(query_sig, as.matrix(drug_info))
-    expect_equal(row.names(top_drugs)[1], "drug3")
+    expect_equal(names(top_drugs)[1], "drug3")
 })
 
 # cleanup

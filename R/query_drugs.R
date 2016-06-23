@@ -10,8 +10,6 @@
 #' that all drug and query genes are regulated in the opposite direction and with
 #' the same rankings within their signatures.
 #'
-#' @import foreach
-#'
 #' @param query_genes Named numeric vector of differentual expression values for
 #'   query genes. Usually 'meta' slot of \code{get_dprimes} result.
 #' @param drug_info Matrix of differential expression values for drugs or drug
@@ -72,23 +70,18 @@ query_drugs <- function(query_genes, drug_info = NULL) {
 
     # get volumes under surfaces of net overlaps (z) as a function of number of
     # drug and query genes (x and y)
-    ncores <- parallel::detectCores()
     ngenes <- nrow(drug_info)
     ndrugs <- ncol(drug_info)
-    step <- ndrugs %/% ncores
 
-    cuts <- seq(1, ndrugs, ifelse(step == 0, 1, step))
-    cuts[length(cuts)] <- ndrugs + 1
     volmax <- sum_rowcolCumsum(x = rep(1, ngenes),
                                i = seq(1, ngenes),
                                j = seq(1, ngenes))
 
-    doMC::registerDoMC(ncores)
-    vols <- foreach(col=1:ndrugs, .combine=c) %dopar% {
+    vols <- sapply(1:ndrugs, function(col) {
         sum_rowcolCumsum(x = drug_info[, col],
                          i = query_ranks,
                          j = drug_ranks[, col])
-    }
+    })
 
     names(vols) <- colnames(drug_info)
     return(sort(vols, TRUE) / volmax)

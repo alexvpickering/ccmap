@@ -12,11 +12,11 @@ test_ma <- function(dprimes, suffix = "") {
 
     # get contrast results for range of query sizes
     cons_res <- lapply(dprimes$contrasts, function(con) {
-        query_drugs(con, step = 100)
+        query_drugs(con)
     })
 
     # get meta-analysis results for range of query sizes
-    meta_res <- query_drugs(dprimes$meta, step = 100)
+    meta_res <- query_drugs(dprimes$meta)
 
     res <- list(meta = meta_res, cons = cons_res)
     saveRDS(res, paste0("ma_res", suffix, ".rds"))
