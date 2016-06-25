@@ -1,5 +1,7 @@
 ---
 title: "Combination Connectivity Mapping"
+author: "Vignette Author"
+date: "`r Sys.Date()`"
 output:
   html_document:
     theme: flatly
@@ -158,4 +160,7 @@ drug_combos <- predict_combos(with = c("LY-294002", "dilazep"))
 
 # query drug combination signatures using a range of query gene sizes
 range_res <- query_drugs(query_sig, drug_combos)
+```
+```{r}
+sessionInfo()
 ```

@@ -7,7 +7,7 @@
 #' a query signature can usually be determined by querying against drug
 #' combination signatures predicted with the top few single drugs.
 #'
-#' @import data.table
+#' @import data.table ccdata AnnotationDbi BiocInstaller xgboost
 #' @param with Character vector of drug names to combine cmap drugs with.
 #'
 #' @seealso \code{\link{query_drugs}} to determine overlap between query and
@@ -64,7 +64,7 @@ predict_combos <- function(with) {
 
     i <- 1
     pb  <- utils::txtProgressBar(min=1, max=nrow(pairs), style=3)
-    for (i in 1:nrow(pairs)) {
+    for (i in seq_len(nrow(pairs))) {
 
         # Probe Predictions -------------------------
 

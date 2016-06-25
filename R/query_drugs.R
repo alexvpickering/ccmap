@@ -10,6 +10,7 @@
 #' that all drug and query genes are regulated in the opposite direction and with
 #' the same rankings within their signatures.
 #'
+#' @import ccdata
 #' @param query_genes Named numeric vector of differentual expression values for
 #'   query genes. Usually 'meta' slot of \code{get_dprimes} result.
 #' @param drug_info Matrix of differential expression values for drugs or drug
@@ -94,7 +95,7 @@ query_drugs <- function(query_genes, drug_info = NULL) {
 #' Sum of cumulative sum computed over rows then columns of matrix.
 #'
 #' Equivalent to computing the cumulative sum of a matrix over rows, then
-#' over columns, then suming every value (though much more fast and memory
+#' over columns, then suming every value (though much faster and more memory
 #' efficient).
 #'
 #' @param x Numeric vector of non-zero values of matrix.

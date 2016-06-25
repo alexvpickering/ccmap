@@ -19,7 +19,7 @@ Numeric value equal to the sum of the cumulative sum computed over
 }
 \description{
 Equivalent to computing the cumulative sum of a matrix over rows, then
-over columns, then suming every value (though much more fast and memory
+over columns, then suming every value (though much faster and more memory
 efficient).
 }
 \examples{

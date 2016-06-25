@@ -46,3 +46,6 @@ head(top_drugs)
 #  # query drug combination signatures using a range of query gene sizes
 #  range_res <- query_drugs(query_sig, drug_combos)
 
+## ------------------------------------------------------------------------
+sessionInfo()
+
