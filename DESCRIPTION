@@ -22,6 +22,7 @@ Imports:
     BiocInstaller,
     ccdata,
     data.table,
+    foreach,
     xgboost
 biocViews:
     GeneExpression,
