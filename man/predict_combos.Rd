@@ -4,7 +4,7 @@
 \alias{predict_combos}
 \title{Get predicted drug combination signatures.}
 \usage{
-predict_combos(with)
+predict_combos(include, exclude = NULL, dat = NULL)
 }
 \arguments{
 \item{with}{Character vector of drug names to combine cmap drugs with.}

@@ -2,6 +2,7 @@
 
 export(get_dprimes)
 export(predict_combos)
+export(query_combos)
 export(query_drugs)
 export(sum_rowcolCumsum)
 import(AnnotationDbi)
@@ -9,3 +10,5 @@ import(BiocInstaller)
 import(ccdata)
 import(data.table)
 import(xgboost)
+importFrom(foreach,"%dopar%")
+importFrom(foreach,foreach)

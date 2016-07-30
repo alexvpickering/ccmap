@@ -4,7 +4,7 @@
 \alias{query_drugs}
 \title{Get overlap between query and drug signatures.}
 \usage{
-query_drugs(query_genes, drug_info = NULL)
+query_drugs(query_genes, drug_info = NULL, sorted = TRUE)
 }
 \arguments{
 \item{query_genes}{Named numeric vector of differentual expression values for
@@ -18,7 +18,7 @@ Vector of numeric values between 1 and -1 indicating extent of overlap
   between query and drug signatures (see details).
 }
 \description{
-Determines the volume under the surface formed by plotting net overlaps (z)
+Determines the volume under the surface formed by plotting net overlap (z)
 as a function of number of drug and query genes (x and y).
 }
 \details{

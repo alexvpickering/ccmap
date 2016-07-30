@@ -1,6 +1,6 @@
 #' Get overlap between query and drug signatures.
 #'
-#' Determines the volume under the surface formed by plotting net overlaps (z)
+#' Determines the volume under the surface formed by plotting net overlap (z)
 #' as a function of number of drug and query genes (x and y).
 #'
 #' Drugs with the largest positive and negative net overlap are predicted to,
