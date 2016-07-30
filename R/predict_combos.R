@@ -29,7 +29,7 @@
 predict_combos <- function(include, exclude = NULL, dat = NULL) {
 
     if (is.null(dat)) {
-        dat <- load_data()
+        dat <- load_ccdata()
     }
 
     # unpack dat

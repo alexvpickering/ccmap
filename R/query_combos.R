@@ -1,11 +1,12 @@
 #' Get overlap between query and predicted drug combination signatures.
 #'
-#' Drug combinations with the largest positive and negative net overlap are predicted to,
+#' Drugs with the largest positive and negative net overlap are predicted to,
 #' respectively, mimic and reverse the query signature. A value of 1 would indicate
-#' that all drug combination and query genes are regulated in the same direction
-#' and with the same rankings within their signatures. A value of -1 would indicate
-#' that all drug and query genes are regulated in the opposite direction and with
-#' the same rankings within their signatures.
+#' that all drug and query genes are regulated in the same direction and have the
+#' same order when sorted by absolute changes in differential expression. A value
+#' of -1 would indicate that all drug and query genes are regulated in the
+#' opposite direction and have the same order when sorted by absolute changes
+#' in differential expression.
 #'
 #' To predict and query all 856086 two-drug combinations, the 'average'
 #' \code{method} can take as little as 10 minutes (Intel Core i7-6700). The 'ml'
@@ -26,7 +27,7 @@
 #'   all 856086 two drug combinations will be predicted and queried.
 #'
 #' @return Vector of numeric values between 1 and -1 indicating extent of overlap
-#'   between query and drug combination signatures (see details).
+#'   between query and drug combination signatures (see description).
 #' @export
 #'
 #' @examples
@@ -81,7 +82,7 @@ query_combos <- function(query_genes, method = "average", include = NULL) {
 
     # use machine learning 'ml' model
     } else {
-        dat  <- load_data(cmap_es)
+        dat  <- load_ccdata(cmap_es)
 
         exclude <- c()
         res <- c()
@@ -182,7 +183,7 @@ query_combos_average <- function(query_genes, cmap_es, include) {
 #
 # @return List with objects need for 'ml' method of predict_combos
 
-load_data <- function(cmap_es = NULL) {
+load_ccdata <- function(cmap_es = NULL) {
 
     #bind global variables
     cmap_var = net1 = net2 = genes = xgb_mod = NULL
