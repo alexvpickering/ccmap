@@ -42,7 +42,7 @@ head(top_drugs)
 # top_combos <- query_combos(query_sig)
 
 # query only combinations with LY-294002
-top_combos <- query_combos(query_sig, include='LY-294002')
+top_combos <- query_combos(query_sig, include='LY-294002', ncores=1)
 
 ## ---- message=FALSE, warning=FALSE---------------------------------------
 # Times on Intel Core i7-6700 with MRO+MKL

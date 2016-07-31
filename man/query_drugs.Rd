@@ -12,6 +12,9 @@ query genes. Usually 'meta' slot of \code{get_dprimes} result.}
 
 \item{drug_info}{Matrix of differential expression values for drugs or drug
 combinations. Rows are genes, columns are drugs.}
+
+\item{sorted}{Would you like the results sorted in decreasing order of overlap?
+Default is TRUE.}
 }
 \value{
 Vector of numeric values between 1 and -1 indicating extent of overlap
@@ -48,7 +51,7 @@ names(query_sig) <- genes
 res <- query_drugs(query_sig, as.matrix(drug_info))
 }
 \seealso{
-\code{\link{predict_combos}} to get predicted drug combination
-  signatures (can be passed to \code{drug_info}).
+\code{\link{query_combos}} to get overlap between query and
+  predicted drug combination signatures.
 }
 

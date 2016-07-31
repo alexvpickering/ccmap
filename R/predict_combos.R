@@ -1,30 +1,28 @@
-#' Get predicted drug combination signatures.
-#'
-#' Predicts drug combination signatures.
-#'
-#' Drug combinations may more closely mimic or reverse the query signature than
-#' individual drugs. The drug combinations that most closely mimic or reverse
-#' a query signature can usually be determined by querying against drug
-#' combination signatures predicted with the top few single drugs.
-#'
-#' @import data.table ccdata AnnotationDbi BiocInstaller xgboost
-#' @param with Character vector of drug names to combine cmap drugs with.
-#'
-#' @seealso \code{\link{query_drugs}} to determine overlap between query and
-#'    predicted drug combination signatures.
-#'
-#' @return drug_info Matrix of differential expression values for drug
-#'   combinations. Rows are genes, columns are drugs.
-#' @export
-#'
-#' @examples
-#' # this returns NULL:
-#' combos_info <- predict_combos("cmap_drug")
-#'
-#'
-#' # predicted expression values for combined treatment with sirolimus
-#' # and all other cmap drugs:
-#' # combos_info <- predict_combos("sirolimus")
+# Get predicted drug combination signatures.
+#
+# Predicts drug combination signatures.
+#
+# Drug combinations may more closely mimic or reverse the query signature than
+# individual drugs. The drug combinations that most closely mimic or reverse
+# a query signature can usually be determined by querying against drug
+# combination signatures predicted with the top few single drugs.
+#
+# @import data.table ccdata AnnotationDbi BiocInstaller xgboost
+# @param include Character vector of drug names to combine cmap drugs with.
+# @param exclude Character vector of drug names to not combine with include.
+# @param dat List with data for machine learning model. If NULL (default), will
+#   be loaded automatically.
+#
+# @seealso \code{\link{query_drugs}} to determine overlap between query and
+#    predicted drug combination signatures.
+#
+# @return drug_info Matrix of differential expression values for drug
+#   combinations. Rows are genes, columns are drugs.
+#
+# @examples
+# # predicted expression values for combined treatment with sirolimus
+# # and all other cmap drugs:
+# # combos_info <- predict_combos("sirolimus")
 
 predict_combos <- function(include, exclude = NULL, dat = NULL) {
 

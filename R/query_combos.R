@@ -25,6 +25,8 @@
 #' @param include Character vector of cmap drug names for which combinations with all
 #'   other cmap drugs will be predicted and queried. If \code{NULL} (default),
 #'   all 856086 two drug combinations will be predicted and queried.
+#' @param ncores Integer, number of cores to use for method 'average'. Default is
+#'   to use all cores.
 #'
 #' @return Vector of numeric values between 1 and -1 indicating extent of overlap
 #'   between query and drug combination signatures (see description).
@@ -50,7 +52,7 @@
 #' dprimes <- get_dprimes(es)
 #'
 #' # query combinations of metformin and all other cmap drugs
-#' top_met_combos <- query_combos(dprimes$meta, include = 'metformin')
+#' top_met_combos <- query_combos(dprimes$meta, include = 'metformin', ncores = 1)
 #'
 #' # previous query but with machine learning method
 #' # top_met_combos <- query_combos(dprimes$meta, 'ml', 'metformin')
@@ -61,7 +63,10 @@
 #' # query all cmap drug combinations with machine learning method
 #' # top_combos <- query_combos(dprimes$meta, 'ml')
 
-query_combos <- function(query_genes, method = "average", include = NULL) {
+query_combos <- function(query_genes, method = "average", include = NULL, ncores=parallel::detectCores()) {
+
+    # bind global
+    cmap_es = NULL
 
     # get cmap_es
     utils::data("cmap_es", package = "ccdata", envir = environment())
@@ -78,7 +83,7 @@ query_combos <- function(query_genes, method = "average", include = NULL) {
 
     # use average model
     if (method != "ml") {
-        return(query_combos_average(query_genes, cmap_es, include))
+        return(query_combos_average(query_genes, cmap_es, include, ncores))
 
     # use machine learning 'ml' model
     } else {
@@ -121,13 +126,12 @@ query_combos <- function(query_genes, method = "average", include = NULL) {
 # @return Vector of numeric values between 1 and -1 indicating extent of overlap
 #   between query and drug combination signatures.
 
-query_combos_average <- function(query_genes, cmap_es, include) {
+query_combos_average <- function(query_genes, cmap_es, include, ncores) {
 
-    ncores=parallel::detectCores()
     doMC::registerDoMC(ncores)
 
     drugs <- colnames(cmap_es)
-    bins  <- avpick::get_bins(length(include), ncores)
+    bins  <- get_bins(length(include), ncores)
 
     resl <- foreach::foreach(i=1:min(ncores, length(bins))) %dopar% {
 
@@ -149,7 +153,7 @@ query_combos_average <- function(query_genes, cmap_es, include) {
             drug_es <- cmap_es[, drug]
 
             # break up task up to reduce memory footprint
-            dbins <- avpick::get_bins(length(other_drugs), 10)
+            dbins <- get_bins(length(other_drugs), 10)
 
             for (dbin in dbins) {
                 combo_es <- cmap_es[, other_drugs[dbin], drop = FALSE]

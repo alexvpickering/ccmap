@@ -130,7 +130,7 @@ cmap_var <- as.matrix(cmap_var)
 Xgb[, 4] <- cmap_var[, drug]
 Xgb[, 5] <- as.vector(cmap_var[, other_drugs])
 
-test_that("Xgb is setup correctly" {
+test_that("Xgb is setup correctly", {
 
     # each row is for the same gene
     for (i in 1:nrow(Xgb)) {
