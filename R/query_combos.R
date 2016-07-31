@@ -129,7 +129,7 @@ query_combos_average <- function(query_genes, cmap_es, include) {
     drugs <- colnames(cmap_es)
     bins  <- avpick::get_bins(length(include), ncores)
 
-    resl <- foreach(i=1:min(ncores, length(bins))) %dopar% {
+    resl <- foreach::foreach(i=1:min(ncores, length(bins))) %dopar% {
 
         bin <- bins[[i]]
 
