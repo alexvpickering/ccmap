@@ -26,7 +26,7 @@
 #' # and all other cmap drugs:
 #' # combos_info <- predict_combos("sirolimus")
 
-predict_combos <- function(include, exclude, dat = NULL) {
+predict_combos <- function(include, exclude = NULL, dat = NULL) {
 
     if (is.null(dat)) {
         dat <- load_data()
@@ -51,7 +51,7 @@ predict_combos <- function(include, exclude, dat = NULL) {
 
         # setup test data for NNet predictions
         drug_es <- rep.row(cmap_es[drug, ], length(other_drugs))
-        Xnet    <- cbind(drug_es, cmap_es[other_drugs, ])
+        Xnet    <- cbind(drug_es, cmap_es[other_drugs, , drop=FALSE])
         rm(drug_es)
 
         # average NNet predictions from net1 and net2
@@ -81,14 +81,15 @@ predict_combos <- function(include, exclude, dat = NULL) {
         rm(Xgb)
 
         # setup combos_es
-        dim(combos_es) <- c(length(combos_es)/11525 , 11525)
-        row.names(combos_es) <- paste(include, other_drugs, sep = " + ")
-        colnames (combos_es) <- genes
+        # transpose?
+        dim(combos_es) <- c(11525, length(combos_es)/11525)
+        colnames(combos_es)  <- paste(drug, other_drugs, sep = " + ")
+        row.names(combos_es) <- genes
 
         res[[length(res)+1]] <- combos_es
         rm(combos_es)
     }
-    return(do.call(rbind, res))
+    return(do.call(cbind, res))
 }
 
 
@@ -119,10 +120,20 @@ get_biocpack <- function(biocpack_name) {
 }
 
 
-rep.row<-function(x,n) {
-    matrix(rep(x,each=n), nrow=n)
-}
 
+#---------------
+
+
+
+
+# Get neural network predictions.
+#
+# Neural network has one hidden layer and very_leaky_rectifier activation
+# (hence pmax(z2/3, z2)).
+#
+# @param net List with W1/W2 weight matrices and b1/b2 bias vectors.
+# @param X Matrix to get predictions for.
+#
 predict.nnet <- function(net, X) {
     z2 <- X %*% net$W1 + net$b1
     a2 <- pmax(z2/3, z2)

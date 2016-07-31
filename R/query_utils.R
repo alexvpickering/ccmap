@@ -48,3 +48,38 @@ get_dprimes <- function(es) {
     }
     return(list (meta=meta, contrasts=contrasts))
 }
+
+
+#---------------
+
+
+
+# Divide integers up to n into n bins
+#
+# Function is useful to divide task among multiple threads.
+#
+# @param n number of items to divide into bins.
+# @param nbins number of bins to divide n items into
+#
+# @return List of integer vectors specifying which items are in each bin
+#
+# @examples
+# x <- 1:22268
+# n <- 10
+# bins <- split(x, sort(x%%n))
+
+get_bins <- function(n, nbins) {
+    split(1:n, sort(1:n%%nbins))
+}
+
+
+# Repeat vector in n rows of matrix.
+#
+# @param x Vector to repeat.
+# @param n Number of rows to copy x into.
+#
+# @return Matrix with x in each of n rows.
+
+rep.row<-function(x,n){
+    matrix(rep(x,each=n),nrow=n)
+}
