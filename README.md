@@ -6,5 +6,4 @@ healthy lifestyles. See [vignette](http://bioconductor.org/packages/devel/bioc/v
 
 `ccmap` is available through [Bioconductor](http://bioconductor.org/packages/ccmap/).
 
------------------
   
