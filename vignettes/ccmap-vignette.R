@@ -31,21 +31,31 @@ library(ccdata)
 data(cmap_es)
 
 ## ---- message=FALSE, warning=FALSE---------------------------------------
-library(ccmap)
 top_drugs <- query_drugs(query_sig)
 
 # correctly identifies LY-294002 as best match among drug signatures
 # other PI3K inhibitors are also identified among top matching drugs
 head(top_drugs)
 
-## ----eval=FALSE----------------------------------------------------------
-#  library(ccmap)
-#  # this takes ~6 minutes per drug in 'with'
-#  drug_combos <- predict_combos(with = c("LY-294002", "dilazep"))
-#  
-#  # query drug combination signatures using a range of query gene sizes
-#  top_combos <- query_drugs(query_sig, drug_combos)
+## ---- message=FALSE, warning=FALSE---------------------------------------
+# query all 856086 combinations (takes ~10 minutes on Intel Core i7-6700)
+# top_combos <- query_combos(query_sig)
 
-## ------------------------------------------------------------------------
+# query only combinations with LY-294002
+top_combos <- query_combos(query_sig, include='LY-294002')
+
+## ---- message=FALSE, warning=FALSE---------------------------------------
+# Times on Intel Core i7-6700 with MRO+MKL
+# requires ~8-10GB of RAM
+
+method  <- 'ml'
+include <- names(head(top_drugs))
+
+# query all 856086 combinations (~2 hours)
+# top_combos <- query_combos(query_sig, method)
+
+# query combinations with top single drugs (~1 minute)
+# top_combos <- query_combos(query_sig, method, include)
+
 sessionInfo()
 

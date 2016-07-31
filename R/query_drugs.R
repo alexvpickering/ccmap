@@ -5,10 +5,11 @@
 #'
 #' Drugs with the largest positive and negative net overlap are predicted to,
 #' respectively, mimic and reverse the query signature. A value of 1 would indicate
-#' that all drug and query genes are regulated in the same direction and with
-#' the same rankings within their signatures. A value of -1 would indicate
-#' that all drug and query genes are regulated in the opposite direction and with
-#' the same rankings within their signatures.
+#' that all drug and query genes are regulated in the same direction and have the
+#' same order when sorted by absolute changes in differential expression. A value
+#' of -1 would indicate that all drug and query genes are regulated in the
+#' opposite direction and have the same order when sorted by absolute changes
+#' in differential expression.
 #'
 #' @import ccdata
 #' @param query_genes Named numeric vector of differentual expression values for
@@ -20,7 +21,7 @@
 #'   signatures (can be passed to \code{drug_info}).
 #'
 #' @return Vector of numeric values between 1 and -1 indicating extent of overlap
-#'   between query and drug signatures (see details).
+#'   between query and drug signatures (see description).
 #'
 #' @export
 #'

@@ -15,7 +15,7 @@ combinations. Rows are genes, columns are drugs.}
 }
 \value{
 Vector of numeric values between 1 and -1 indicating extent of overlap
-  between query and drug signatures (see details).
+  between query and drug signatures (see description).
 }
 \description{
 Determines the volume under the surface formed by plotting net overlap (z)
@@ -24,10 +24,11 @@ as a function of number of drug and query genes (x and y).
 \details{
 Drugs with the largest positive and negative net overlap are predicted to,
 respectively, mimic and reverse the query signature. A value of 1 would indicate
-that all drug and query genes are regulated in the same direction and with
-the same rankings within their signatures. A value of -1 would indicate
-that all drug and query genes are regulated in the opposite direction and with
-the same rankings within their signatures.
+that all drug and query genes are regulated in the same direction and have the
+same order when sorted by absolute changes in differential expression. A value
+of -1 would indicate that all drug and query genes are regulated in the
+opposite direction and have the same order when sorted by absolute changes
+in differential expression.
 }
 \examples{
 
