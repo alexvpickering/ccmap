@@ -44,7 +44,7 @@ head(top_drugs)
 #  drug_combos <- predict_combos(with = c("LY-294002", "dilazep"))
 #  
 #  # query drug combination signatures using a range of query gene sizes
-#  range_res <- query_drugs(query_sig, drug_combos)
+#  top_combos <- query_drugs(query_sig, drug_combos)
 
 ## ------------------------------------------------------------------------
 sessionInfo()

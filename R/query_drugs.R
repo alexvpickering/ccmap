@@ -42,7 +42,7 @@
 #' res <- query_drugs(query_sig, as.matrix(drug_info))
 
 
-query_drugs <- function(query_genes, drug_info = NULL) {
+query_drugs <- function(query_genes, drug_info = NULL, sorted = TRUE) {
     # bind global
     cmap_es = NULL
 
@@ -54,12 +54,12 @@ query_drugs <- function(query_genes, drug_info = NULL) {
     }
 
     # use only common genes
-    drug_info   <- drug_info[row.names(drug_info) %in% names(query_genes), ]
+    drug_info   <- drug_info[row.names(drug_info) %in% names(query_genes), ,drop = FALSE]
     query_genes <- query_genes[row.names(drug_info)]
 
     # get gene ranking for drugs and query
-    drug_ranks  <- apply(-abs(drug_info), 2, rank, ties.method = "first")
-    query_ranks <- rank(-abs(query_genes), ties.method = "first")
+    drug_ranks  <- apply(-abs(drug_info), 2, data.table::frank, ties.method = "first")
+    query_ranks <- data.table::frank(-abs(query_genes), ties.method = "first")
 
 
     # transform expression data to binary
@@ -67,7 +67,7 @@ query_drugs <- function(query_genes, drug_info = NULL) {
     query_genes <- sign(query_genes)
 
     # get direction of overlap
-    drug_info <- apply(drug_info, 2, function(col) col * query_genes)
+    drug_info <- sweep(drug_info, 1, query_genes, `*`)
 
     # get volumes under surfaces of net overlaps (z) as a function of number of
     # drug and query genes (x and y)
@@ -85,7 +85,12 @@ query_drugs <- function(query_genes, drug_info = NULL) {
     })
 
     names(vols) <- colnames(drug_info)
-    return(sort(vols, TRUE) / volmax)
+
+    if (!sorted) {
+        return(vols / volmax)
+    } else {
+        return(sort(vols/volmax, decreasing = TRUE))
+    }
 }
 
 
@@ -114,7 +119,5 @@ query_drugs <- function(query_genes, drug_info = NULL) {
 #' sum_rowcolCumsum(x, i, j)
 
 sum_rowcolCumsum <- function(x, i, j) {
-    ni <- max(i)
-    nj <- max(j)
-    sum(x * (ni - i + 1) * (nj - j + 1))
+    sum(x * (max(i) - i + 1) * (max(j) - j + 1))
 }

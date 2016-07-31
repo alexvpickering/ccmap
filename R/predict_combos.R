@@ -26,102 +26,78 @@
 #' # and all other cmap drugs:
 #' # combos_info <- predict_combos("sirolimus")
 
-predict_combos <- function(with) {
+predict_combos <- function(include, exclude, dat = NULL) {
 
-    #bind global variables
-    cmap_es = cmap_tables = combo_model = NULL
-
-    # Setup -------------------------
-    utils::data("cmap_es", package = "ccdata", envir = environment())
-    drugs <- colnames(cmap_es)
-    if (FALSE %in% (with %in% drugs)) {
-        message("Drugs in 'with' not found.")
-        return(NULL)
+    if (is.null(dat)) {
+        dat <- load_data()
     }
 
-    #load model & cmap tables
-    utils::data("combo_model", package = "ccdata", envir = environment())
-    utils::data("cmap_tables", package = "ccdata", envir = environment())
+    # unpack dat
+    cmap_es  <- dat$es
+    cmap_var <- dat$var
+    net1     <- dat$net1
+    net2     <- dat$net2
+    genes    <- dat$genes
+    xgb_mod  <- dat$xgb_mod
+    rm(dat)
 
-    drugs  <- drugs[!drugs %in% with]
-    probes <- row.names(cmap_tables[[1]])
+    # predict combinations of 'include' and other drugs except 'exclude'
+    other_drugs <- setdiff(row.names(cmap_es), c(include, exclude))
 
-    #list of unique drug combos
-    pairs <- expand.grid(with, drugs, stringsAsFactors = FALSE)
+    if (length(other_drugs) == 0) return(NULL)
 
-    #load annotation information
-    hgu133a <- get_biocpack("hgu133a.db")
-    suppressMessages(map <- AnnotationDbi::select(hgu133a, probes, "SYMBOL"))
-    map <- map[!is.na(map$SYMBOL),]
-    map$SYMBOL <- toupper(map$SYMBOL)
-    genes <- unique(map$SYMBOL)
+    res <- list()
+    for (drug in include) {
 
-    d1_cols <- paste("drug1", colnames(cmap_tables[[1]]), sep="_")
-    d2_cols <- paste("drug2", colnames(cmap_tables[[1]]), sep="_")
+        # setup test data for NNet predictions
+        drug_es <- rep.row(cmap_es[drug, ], length(other_drugs))
+        Xnet    <- cbind(drug_es, cmap_es[other_drugs, ])
+        rm(drug_es)
 
-    #final drug info data.frame
-    drug_info <- data.frame(row.names = genes)
+        # average NNet predictions from net1 and net2
+        preds <- predict.nnet(net1, Xnet)
+        preds <- (preds + predict.nnet(net2, Xnet))/2
 
-    i <- 1
-    pb  <- utils::txtProgressBar(min=1, max=nrow(pairs), style=3)
-    for (i in seq_len(nrow(pairs))) {
+        # setup test data for xgb predictions
+        Xgb <- matrix(nrow = length(preds), ncol = 5)
+        colnames(Xgb) <- c("net_preds", "drug1_dprime", "drug2_dprime",
+                            "drug1_vardprime", "drug2_vardprime")
 
-        # Probe Predictions -------------------------
+        # add NNet preds and dprimes
+        Xgb[, 1] <- as.vector(t(preds))
+        rm(preds)
 
-        dr1 <- pairs[i, 1]
-        dr2 <- pairs[i, 2]
+        Xnet1 <- t(Xnet[, 1:11525])
+        Xnet2 <- t(Xnet[, 11526:23050]) ; rm(Xnet)
+        Xgb[, 2:3] <- cbind(as.vector(Xnet1), as.vector(Xnet2))
+        rm(Xnet1, Xnet2)
 
-        #combine data from cmap_tables
-        X <- cbind(cmap_tables[[dr1]], cmap_tables[[dr2]])
-        X <- as.matrix(X)
-        colnames(X) <- c(d1_cols, d2_cols)
+        # add vardprimes
+        Xgb[, 4] <- cmap_var[, drug]
+        Xgb[, 5] <- as.vector(cmap_var[, other_drugs])
 
-        #make predictions with combo_model
-        probe_preds <- xgboost::predict(combo_model, X)
+        # xgboost predictions
+        combos_es <- xgboost::predict(xgb_mod, Xgb)
+        rm(Xgb)
 
-        #predict using reverse order
-        colnames(X) <- c(d2_cols, d1_cols)
-        X <- X[, c(d1_cols, d2_cols)]
-        probe_preds_rev <- xgboost::predict(combo_model, X)
+        # setup combos_es
+        dim(combos_es) <- c(length(combos_es)/11525 , 11525)
+        row.names(combos_es) <- paste(include, other_drugs, sep = " + ")
+        colnames (combos_es) <- genes
 
-        #get average then multiply by 1.5 (model correction factor)
-        probe_preds <- (probe_preds + probe_preds_rev) / 2 * 1.623
-
-        #probe_preds vector to df
-        probe_preds <- as.data.frame(probe_preds)
-        colnames(probe_preds)  <- paste(dr1, dr2, sep=" + ")
-        row.names(probe_preds) <- probes
-
-
-        # Probes to Genes -------------------------
-
-
-        #annotate probe probe_preds with SYMBOL
-        probe_preds <- probe_preds[map$PROBEID, , drop=FALSE]
-        probe_preds$SYMBOL <- map$SYMBOL
-
-        #where duplicated SYMBOL, choose probe with largest absolute prediction
-        probe_preds <- data.table(probe_preds)
-        gene_preds  <- probe_preds[,
-                                   lapply(.SD, function (col) col[which.max(abs(col))]),
-                                   by='SYMBOL']
-
-
-        # Add to Drug Info -------------------------
-
-        gene_preds <- as.data.frame(gene_preds)
-        row.names(gene_preds) <- gene_preds$SYMBOL
-        gene_preds <- gene_preds[genes, -1, drop=FALSE]
-
-        drug_info <- cbind(drug_info, gene_preds)
-        utils::setTxtProgressBar(pb, i)
-        i <- i + 1
+        res[[length(res)+1]] <- combos_es
+        rm(combos_es)
     }
-    return(as.matrix(drug_info))
+    return(do.call(rbind, res))
 }
 
 
+
 #---------------
+
+
+
+
 
 
 # Downloads bioconductor package.
@@ -141,3 +117,19 @@ get_biocpack <- function(biocpack_name) {
     db <- get(biocpack_name, getNamespace(biocpack_name))
     return (db)
 }
+
+
+rep.row<-function(x,n) {
+    matrix(rep(x,each=n), nrow=n)
+}
+
+predict.nnet <- function(net, X) {
+    z2 <- X %*% net$W1 + net$b1
+    a2 <- pmax(z2/3, z2)
+    return(a2 %*% net$W2 + net$b2)
+}
+
+
+
+
+
