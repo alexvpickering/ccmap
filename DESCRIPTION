@@ -4,15 +4,28 @@ Title: Combination Connectivity Mapping
 Version: 0.99.4
 Author: Alex Pickering
 Maintainer: Alex Pickering <alexvpickering@gmail.com>
-Description: Finds drugs and drug combinations that are predicted to
-        reverse or mimic gene expression signatures. These drugs might
-        reverse diseases or mimic healthy lifestyles.
+Description: Finds drugs and drug combinations that are predicted to reverse or
+    mimic gene expression signatures. These drugs might reverse diseases or mimic
+     healthy lifestyles.
 License: MIT + file LICENSE
 LazyData: TRUE
 RoxygenNote: 5.0.1
 VignetteBuilder: knitr
-Suggests: crossmeta, knitr, rmarkdown, testthat, lydata,
-Imports: AnnotationDbi, BiocInstaller, ccdata, data.table, xgboost
-biocViews: GeneExpression, Transcription, Microarray,
-        DifferentialExpression
-NeedsCompilation: no
+Suggests:
+    crossmeta,
+    knitr,
+    rmarkdown,
+    testthat,
+    lydata,
+Imports:
+    AnnotationDbi,
+    BiocInstaller,
+    ccdata,
+    data.table,
+    xgboost
+biocViews:
+    GeneExpression,
+    Transcription,
+    Microarray,
+    DifferentialExpression
+VignetteBuilder: knitr
