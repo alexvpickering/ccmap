@@ -16,9 +16,11 @@
 #'   query genes. Usually 'meta' slot of \code{get_dprimes} result.
 #' @param drug_info Matrix of differential expression values for drugs or drug
 #'   combinations. Rows are genes, columns are drugs.
+#' @param sorted Would you like the results sorted in decreasing order of overlap?
+#'   Default is TRUE.
 #'
-#' @seealso \code{\link{predict_combos}} to get predicted drug combination
-#'   signatures (can be passed to \code{drug_info}).
+#' @seealso \code{\link{query_combos}} to get overlap between query and
+#'   predicted drug combination signatures.
 #'
 #' @return Vector of numeric values between 1 and -1 indicating extent of overlap
 #'   between query and drug signatures (see description).

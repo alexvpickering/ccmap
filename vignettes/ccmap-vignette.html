@@ -11,7 +11,7 @@
 
 <meta name="author" content="Alex Pickering" />
 
-<meta name="date" content="2016-07-30" />
+<meta name="date" content="2016-07-31" />
 
 <title>Combination Connectivity Mapping</title>
 
@@ -118,7 +118,7 @@ $(document).ready(function () {
 
 <h1 class="title toc-ignore">Combination Connectivity Mapping</h1>
 <h4 class="author"><em>Alex Pickering</em></h4>
-<h4 class="date"><em>2016-07-30</em></h4>
+<h4 class="date"><em>2016-07-31</em></h4>
 
 </div>
 
@@ -185,9 +185,9 @@ data(cmap_es)</code></pre>
 # other PI3K inhibitors are also identified among top matching drugs
 head(top_drugs)</code></pre>
 <pre><code>##     LY-294002     sirolimus 0297417-0002B    wortmannin       dilazep 
-##     0.3670635     0.2340646     0.2299864     0.2181248     0.2158558 
+##     0.3668199     0.2363640     0.2283809     0.2201212     0.2149261 
 ##   resveratrol 
-##     0.2024713</code></pre>
+##     0.2056194</code></pre>
 <hr />
 </div>
 <div id="drug-combinations" class="section level3">
@@ -199,7 +199,7 @@ head(top_drugs)</code></pre>
 # top_combos &lt;- query_combos(query_sig)
 
 # query only combinations with LY-294002
-top_combos &lt;- query_combos(query_sig, include='LY-294002')</code></pre>
+top_combos &lt;- query_combos(query_sig, include='LY-294002', ncores=1)</code></pre>
 <p>A small improvement to 80.18% acurracy was obtained using machine learning models. To use these models requires 8-10GB of RAM and about 2 hours (Intel Core i7-6700 with the <a href="https://mran.revolutionanalytics.com/open/">MRO+MKL</a> distribution of R) to predict and query all 856086 unique two-drug combinations. In practice, the drug combinations that most closely mimic or reverse a query signature usually include the top few single drugs. By only predicting drug combinations that include the top few single drugs, prediction times are greatly reduced:</p>
 <pre class="r"><code># Times on Intel Core i7-6700 with MRO+MKL
 # requires ~8-10GB of RAM
@@ -214,7 +214,7 @@ include &lt;- names(head(top_drugs))
 # top_combos &lt;- query_combos(query_sig, method, include)
 
 sessionInfo()</code></pre>
-<pre><code>## R version 3.3.0 (2016-05-03)
+<pre><code>## R version 3.3.1 (2016-06-21)
 ## Platform: x86_64-pc-linux-gnu (64-bit)
 ## Running under: Ubuntu 14.04.4 LTS
 ## 
@@ -230,27 +230,26 @@ sessionInfo()</code></pre>
 ## [1] stats     graphics  grDevices utils     datasets  methods   base     
 ## 
 ## other attached packages:
-## [1] ccdata_0.99.3    limma_3.28.17    lydata_0.99.1    crossmeta_0.99.5
-## [5] ccmap_0.99.4    
+## [1] ccdata_0.99.4    limma_3.28.17    lydata_0.99.1    crossmeta_0.99.5
+## [5] ccmap_0.99.5    
 ## 
 ## loaded via a namespace (and not attached):
-##  [1] Rcpp_0.12.5          metaMA_3.1.2         compiler_3.3.0      
+##  [1] Rcpp_0.12.5          metaMA_3.1.2         compiler_3.3.1      
 ##  [4] BiocInstaller_1.22.3 formatR_1.4          iterators_1.0.8     
-##  [7] tools_3.3.0          testthat_1.0.2       digest_0.6.9        
+##  [7] tools_3.3.1          testthat_1.0.2       digest_0.6.9        
 ## [10] RSQLite_1.0.0        memoise_1.0.0        evaluate_0.9        
 ## [13] lattice_0.20-33      Matrix_1.2-6         foreach_1.4.3       
-## [16] shiny_0.13.2         DBI_0.4-1            avpick_0.1.0        
-## [19] yaml_2.1.13          parallel_3.3.0       withr_1.0.2         
-## [22] stringr_1.0.0        roxygen2_5.0.1       knitr_1.13          
-## [25] doMC_1.3.4           S4Vectors_0.10.2     IRanges_2.6.1       
-## [28] devtools_1.12.0      stats4_3.3.0         xgboost_0.4-3       
-## [31] grid_3.3.0           data.table_1.9.6     Biobase_2.32.0      
-## [34] R6_2.1.2             AnnotationDbi_1.34.4 fdrtool_1.2.15      
-## [37] rmarkdown_1.0        SMVar_1.3.3          magrittr_1.5        
-## [40] codetools_0.2-14     htmltools_0.3.5      BiocGenerics_0.18.0 
-## [43] xtable_1.8-2         mime_0.5             httpuv_1.3.3        
-## [46] stringi_1.1.1        miniUI_0.1.1         chron_2.3-47        
-## [49] crayon_1.3.2</code></pre>
+## [16] shiny_0.13.2         DBI_0.4-1            yaml_2.1.13         
+## [19] parallel_3.3.1       withr_1.0.2          stringr_1.0.0       
+## [22] roxygen2_5.0.1       knitr_1.13           doMC_1.3.4          
+## [25] S4Vectors_0.10.2     IRanges_2.6.1        devtools_1.12.0.9000
+## [28] stats4_3.3.1         xgboost_0.4-3        grid_3.3.1          
+## [31] data.table_1.9.6     Biobase_2.32.0       R6_2.1.2            
+## [34] AnnotationDbi_1.34.4 fdrtool_1.2.15       rmarkdown_1.0       
+## [37] SMVar_1.3.3          magrittr_1.5         codetools_0.2-14    
+## [40] htmltools_0.3.5      BiocGenerics_0.18.0  xtable_1.8-2        
+## [43] mime_0.5             httpuv_1.3.3         stringi_1.1.1       
+## [46] miniUI_0.1.1         chron_2.3-47         crayon_1.3.2</code></pre>
 </div>
 
 

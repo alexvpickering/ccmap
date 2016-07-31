@@ -4,7 +4,8 @@
 \alias{query_combos}
 \title{Get overlap between query and predicted drug combination signatures.}
 \usage{
-query_combos(query_genes, method = "average", include = NULL)
+query_combos(query_genes, method = "average", include = NULL,
+  ncores = parallel::detectCores())
 }
 \arguments{
 \item{query_genes}{Named numeric vector of differentual expression values for
@@ -16,6 +17,9 @@ see details and vignette).}
 \item{include}{Character vector of cmap drug names for which combinations with all
 other cmap drugs will be predicted and queried. If \code{NULL} (default),
 all 856086 two drug combinations will be predicted and queried.}
+
+\item{ncores}{Integer, number of cores to use for method 'average'. Default is
+to use all cores.}
 }
 \value{
 Vector of numeric values between 1 and -1 indicating extent of overlap
@@ -59,7 +63,7 @@ es <- es_meta(anals)
 dprimes <- get_dprimes(es)
 
 # query combinations of metformin and all other cmap drugs
-top_met_combos <- query_combos(dprimes$meta, include = 'metformin')
+top_met_combos <- query_combos(dprimes$meta, include = 'metformin', ncores = 1)
 
 # previous query but with machine learning method
 # top_met_combos <- query_combos(dprimes$meta, 'ml', 'metformin')
