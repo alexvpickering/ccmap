@@ -128,7 +128,8 @@ query_combos <- function(query_genes, method = "average", include = NULL, ncores
 
 query_combos_average <- function(query_genes, cmap_es, include, ncores) {
 
-    doMC::registerDoMC(ncores)
+    cl <- parallel::makeCluster(ncores)
+    doParallel::registerDoParallel(cl)
 
     drugs <- colnames(cmap_es)
     bins  <- get_bins(length(include), ncores)
@@ -170,6 +171,7 @@ query_combos_average <- function(query_genes, cmap_es, include, ncores) {
         }
         res
     }
+    parallel::stopCluster(cl)
     return(sort(unlist(resl), decreasing = TRUE))
 }
 
