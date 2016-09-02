@@ -127,6 +127,7 @@ query_combos <- function(query_genes, method = "average", include = NULL, ncores
 #   between query and drug combination signatures.
 
 query_combos_average <- function(query_genes, cmap_es, include, ncores) {
+    i = NULL  # bind global variable
 
     cl <- parallel::makeCluster(ncores)
     doParallel::registerDoParallel(cl)
