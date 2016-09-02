@@ -1,7 +1,7 @@
 Package: ccmap
 Type: Package
 Title: Combination Connectivity Mapping
-Version: 0.99.7
+Version: 0.99.9
 Author: Alex Pickering
 Maintainer: Alex Pickering <alexvpickering@gmail.com>
 Description: Finds drugs and drug combinations that are predicted to reverse or
@@ -18,7 +18,7 @@ Suggests:
     testthat,
     lydata,
 Imports:
-    AnnotationDbi (>= 1.35.4),
+    AnnotationDbi (>= 1.34.4),
     BiocInstaller,
     ccdata (>= 0.99.4),
     doParallel (>= 1.0.10),

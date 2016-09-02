@@ -39,13 +39,13 @@ predict_combos <- function(include, exclude = NULL, dat = NULL) {
     xgb_mod  <- dat$xgb_mod
     rm(dat)
 
-    # predict combinations of 'include' and other drugs except 'exclude'
-    other_drugs <- setdiff(row.names(cmap_es), c(include, exclude))
-
-    if (length(other_drugs) == 0) return(NULL)
-
     res <- list()
     for (drug in include) {
+
+        # predict combinations of 'include' and other drugs except 'exclude'
+        other_drugs <- setdiff(row.names(cmap_es), c(drug, exclude))
+
+        if (length(other_drugs) == 0) return(NULL)
 
         # setup test data for NNet predictions
         drug_es <- rep.row(cmap_es[drug, ], length(other_drugs))
@@ -79,13 +79,14 @@ predict_combos <- function(include, exclude = NULL, dat = NULL) {
         rm(Xgb)
 
         # setup combos_es
-        # transpose?
         dim(combos_es) <- c(11525, length(combos_es)/11525)
         colnames(combos_es)  <- paste(drug, other_drugs, sep = " + ")
         row.names(combos_es) <- genes
 
         res[[length(res)+1]] <- combos_es
         rm(combos_es)
+
+        exclude <- c(exclude, drug)
     }
     return(do.call(cbind, res))
 }
@@ -133,9 +134,9 @@ get_biocpack <- function(biocpack_name) {
 # @param X Matrix to get predictions for.
 #
 predict.nnet <- function(net, X) {
-    z2 <- X %*% net$W1 + net$b1
+    z2 <- sweep(X %*% net$W1, 2, net$b1, "+")
     a2 <- pmax(z2/3, z2)
-    return(a2 %*% net$W2 + net$b2)
+    return (sweep(a2 %*% net$W2, 2, net$b2, "+"))
 }
 
 
