@@ -4,14 +4,15 @@
 \alias{query_drugs}
 \title{Get overlap between query and drug signatures.}
 \usage{
-query_drugs(query_genes, drug_info = NULL, sorted = TRUE)
+query_drugs(query_genes, drug_info = c("cmap", "l1000"), sorted = TRUE)
 }
 \arguments{
 \item{query_genes}{Named numeric vector of differentual expression values for
 query genes. Usually 'meta' slot of \code{get_dprimes} result.}
 
-\item{drug_info}{Matrix of differential expression values for drugs or drug
-combinations. Rows are genes, columns are drugs.}
+\item{drug_info}{Character vector specifying which dataset to query
+(either 'cmap' or 'l1000'). Can also provide a matrix of differential expression
+values for drugs or drug combinations (rows are genes, columns are drugs).}
 
 \item{sorted}{Would you like the results sorted in decreasing order of overlap?
 Default is TRUE.}
@@ -32,6 +33,10 @@ same order when sorted by absolute changes in differential expression. A value
 of -1 would indicate that all drug and query genes are regulated in the
 opposite direction and have the same order when sorted by absolute changes
 in differential expression.
+
+The 26303 LINCS l1000 signatures (drugs & genetic over/under expression) can also be queried.
+In order to compare l1000 results to those obtained with cmap, only the same genes should be
+included (see example).
 }
 \examples{
 
@@ -49,6 +54,12 @@ query_sig <- drug_info$drug3
 names(query_sig) <- genes
 
 res <- query_drugs(query_sig, as.matrix(drug_info))
+
+# use only common genes for l1000 and cmap matrices
+# library(ccdata)
+# data(cmap_es)
+# data(l1000_es)
+# cmap_es <- cmap_es[row.names(l1000_es), ]
 }
 \seealso{
 \code{\link{query_combos}} to get overlap between query and
