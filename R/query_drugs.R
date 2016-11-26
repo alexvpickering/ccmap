@@ -11,11 +11,16 @@
 #' opposite direction and have the same order when sorted by absolute changes
 #' in differential expression.
 #'
+#' The 26303 LINCS l1000 signatures (drugs & genetic over/under expression) can also be queried.
+#' In order to compare l1000 results to those obtained with cmap, only the same genes should be
+#' included (see example).
+#'
 #' @import ccdata
 #' @param query_genes Named numeric vector of differentual expression values for
 #'   query genes. Usually 'meta' slot of \code{get_dprimes} result.
-#' @param drug_info Matrix of differential expression values for drugs or drug
-#'   combinations. Rows are genes, columns are drugs.
+#' @param drug_info Character vector specifying which dataset to query
+#'   (either 'cmap' or 'l1000'). Can also provide a matrix of differential expression
+#'   values for drugs or drug combinations (rows are genes, columns are drugs).
 #' @param sorted Would you like the results sorted in decreasing order of overlap?
 #'   Default is TRUE.
 #'
@@ -43,17 +48,22 @@
 #' names(query_sig) <- genes
 #'
 #' res <- query_drugs(query_sig, as.matrix(drug_info))
+#'
+#' # use only common genes for l1000 and cmap matrices
+#' # library(ccdata)
+#' # data(cmap_es)
+#' # data(l1000_es)
+#' # cmap_es <- cmap_es[row.names(l1000_es), ]
 
 
-query_drugs <- function(query_genes, drug_info = NULL, sorted = TRUE) {
-    # bind global
-    cmap_es = NULL
+query_drugs <- function(query_genes, drug_info = c('cmap', 'l1000'), sorted = TRUE) {
 
     # default to cmap_es for drug_info
-    if (is.null(drug_info)) {
-        utils::data("cmap_es", package = "ccdata", envir = environment())
-        drug_info <- cmap_es
-        rm(cmap_es)
+    if (class(drug_info) == 'character') {
+        fname <- paste0(drug_info[1], '_es')
+        utils::data(list = fname, package = "ccdata", envir = environment())
+        drug_info <- get(fname)
+        rm(list = fname)
     }
 
     # use only common genes
