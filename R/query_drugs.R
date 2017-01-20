@@ -56,7 +56,7 @@
 #' # cmap_es <- cmap_es[row.names(l1000_es), ]
 
 
-query_drugs <- function(query_genes, drug_info = c('cmap', 'l1000'), sorted = TRUE) {
+query_drugs <- function(query_genes, drug_info = c('cmap', 'l1000'), sorted = TRUE, ngenes = 100) {
 
     # default to cmap_es for drug_info
     if (class(drug_info) == 'character') {
@@ -66,44 +66,29 @@ query_drugs <- function(query_genes, drug_info = c('cmap', 'l1000'), sorted = TR
         rm(list = fname)
     }
 
+
     # use only common genes
-    drug_info   <- drug_info[row.names(drug_info) %in% names(query_genes), ,drop = FALSE]
-    query_genes <- query_genes[row.names(drug_info)]
+    query_genes <- query_genes[names(query_genes) %in% row.names(drug_info)]
 
-    # get gene ranking for drugs and query
-    drug_ranks  <- apply(-abs(drug_info), 2, data.table::frank, ties.method = "first")
-    query_ranks <- data.table::frank(-abs(query_genes), ties.method = "first")
+    # top 100 up/down genes
+    query_genes <- sort(query_genes, TRUE)
+    query_genes <- c(head(query_genes, ngenes), tail(query_genes, ngenes))
+    drug_info   <- drug_info[names(query_genes), ,drop = FALSE]
+
+    # cosine similarity
+    dist <- 1 - apply(drug_info, 2, lsa::cosine, query_genes)
 
 
-    # transform expression data to binary
-    drug_info <- sign(drug_info)
-    query_genes <- sign(query_genes)
+    # drug_info   <- sweep(drug_info, 1, query_genes, `*`)
+    # xcos        <- colSums(drug_info)
+    # names(xcos) <- colnames(drug_info)
 
-    # get direction of overlap
-    drug_info <- sweep(drug_info, 1, query_genes, `*`)
-
-    # get volumes under surfaces of net overlaps (z) as a function of number of
-    # drug and query genes (x and y)
-    ngenes <- nrow(drug_info)
-    ndrugs <- ncol(drug_info)
-
-    volmax <- sum_rowcolCumsum(x = rep(1, ngenes),
-                               i = seq(1, ngenes),
-                               j = seq(1, ngenes))
-
-    vols <- sapply(1:ndrugs, function(col) {
-        sum_rowcolCumsum(x = drug_info[, col],
-                         i = query_ranks,
-                         j = drug_ranks[, col])
-    })
-
-    names(vols) <- colnames(drug_info)
-
-    if (!sorted) {
-        return(vols / volmax)
+    if (sorted) {
+        return(sort(dist))
     } else {
-        return(sort(vols/volmax, decreasing = TRUE))
+        return(dist)
     }
+
 }
 
 
