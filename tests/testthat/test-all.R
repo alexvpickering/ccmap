@@ -213,5 +213,5 @@ test_that("get_bins is working properly", {
 
 # cleanup -----
 rm(drug_info, genes, query_sig, cmap_es, cmap_var, combos_es, drug_es, preds,
-   Xgb, Xnet, Xnet1, Xnet2, drug, other_drugs, nsamples, ngenes, nhidden, Xnet,
+   Xgb, Xnet1, Xnet2, drug, other_drugs, nsamples, ngenes, nhidden, Xnet,
    net1)

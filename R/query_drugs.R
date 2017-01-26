@@ -1,17 +1,11 @@
 #' Get overlap between query and drug signatures.
 #'
-#' Determines the volume under the surface formed by plotting net overlap (z)
-#' as a function of number of drug and query genes (x and y).
+#' Determines the cosine similarity between the query and each drug signature.
 #'
-#' Drugs with the largest positive and negative net overlap are predicted to,
-#' respectively, mimic and reverse the query signature. A value of 1 would indicate
-#' that all drug and query genes are regulated in the same direction and have the
-#' same order when sorted by absolute changes in differential expression. A value
-#' of -1 would indicate that all drug and query genes are regulated in the
-#' opposite direction and have the same order when sorted by absolute changes
-#' in differential expression.
+#' Drugs with the largest positive and negative cosine similarity are predicted to,
+#' respectively, mimic and reverse the query signature. Values range from +1 to -1.
 #'
-#' The 26303 LINCS l1000 signatures (drugs & genetic over/under expression) can also be queried.
+#' The 230829 LINCS l1000 signatures (drugs & genetic over/under expression) can also be queried.
 #' In order to compare l1000 results to those obtained with cmap, only the same genes should be
 #' included (see example).
 #'
@@ -21,14 +15,13 @@
 #' @param drug_info Character vector specifying which dataset to query
 #'   (either 'cmap' or 'l1000'). Can also provide a matrix of differential expression
 #'   values for drugs or drug combinations (rows are genes, columns are drugs).
-#' @param sorted Would you like the results sorted in decreasing order of overlap?
+#' @param sorted Would you like the results sorted by decreasing similarity?
 #'   Default is TRUE.
 #'
-#' @seealso \code{\link{query_combos}} to get overlap between query and
+#' @seealso \code{\link{query_combos}} to get similarity between query and
 #'   predicted drug combination signatures.
 #'
-#' @return Vector of numeric values between 1 and -1 indicating extent of overlap
-#'   between query and drug signatures (see description).
+#' @return Vector of cosine similarities between query and drug combination signatures.
 #'
 #' @export
 #'
@@ -66,7 +59,6 @@ query_drugs <- function(query_genes, drug_info = c('cmap', 'l1000'), sorted = TR
         rm(list = fname)
     }
 
-
     # use only common genes
     query_genes <- query_genes[names(query_genes) %in% row.names(drug_info)]
 
@@ -76,17 +68,12 @@ query_drugs <- function(query_genes, drug_info = c('cmap', 'l1000'), sorted = TR
     drug_info   <- drug_info[names(query_genes), ,drop = FALSE]
 
     # cosine similarity
-    dist <- 1 - apply(drug_info, 2, lsa::cosine, query_genes)
-
-
-    # drug_info   <- sweep(drug_info, 1, query_genes, `*`)
-    # xcos        <- colSums(drug_info)
-    # names(xcos) <- colnames(drug_info)
+    sim <- apply(drug_info, 2, lsa::cosine, query_genes)
 
     if (sorted) {
-        return(sort(dist))
+        return(sort(sim, decreasing = TRUE))
     } else {
-        return(dist)
+        return(sim)
     }
 
 }

@@ -1,12 +1,7 @@
 #' Get overlap between query and predicted drug combination signatures.
 #'
-#' Drugs with the largest positive and negative net overlap are predicted to,
-#' respectively, mimic and reverse the query signature. A value of 1 would indicate
-#' that all drug and query genes are regulated in the same direction and have the
-#' same order when sorted by absolute changes in differential expression. A value
-#' of -1 would indicate that all drug and query genes are regulated in the
-#' opposite direction and have the same order when sorted by absolute changes
-#' in differential expression.
+#' Drugs with the largest positive and negative cosine similarity are predicted to,
+#' respectively, mimic and reverse the query signature. Values range from +1 to -1.
 #'
 #' To predict and query all 856086 two-drug cmap combinations, the 'average'
 #' \code{method} can take as little as 10 minutes (Intel Core i7-6700). The 'ml'
@@ -15,7 +10,7 @@
 #' faster by specifying only a subset of drugs using the \code{include} parameter.
 #' To speed up the 'ml' method, the MRO+MKL distribution of R can help
 #' substantially (\href{https://mran.revolutionanalytics.com/open/}{link}).
-#' The combinations of LINCS l1000 signatures (~350 million) can also be queried
+#' The combinations of LINCS l1000 signatures (~26 billion) can also be queried
 #' using the 'average' \code{method}. In order to compare l1000 results to those
 #' obtained with cmap, only the same genes should be queried (see example).
 #'
@@ -34,8 +29,7 @@
 #' @param ncores Integer, number of cores to use for method 'average'. Default is
 #'   to use all cores.
 #'
-#' @return Vector of numeric values between 1 and -1 indicating extent of overlap
-#'   between query and drug combination signatures (see description).
+#' @return Vector of cosine similarities between query and drug combination signatures.
 #' @export
 #'
 #' @examples
@@ -92,7 +86,9 @@ query_combos <- function(query_genes, drug_info = c('cmap', 'l1000'), method = c
         rm(list = fname)
     }
 
-    drugs <- colnames(drug_info)
+    drugs   <- colnames(drug_info)
+    cpds    <- gsub('_.+?$', '', drugs)
+    include <- drugs[cpds %in% include]
 
     # check 'include'
     if (FALSE %in% (include %in% drugs)) {
