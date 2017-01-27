@@ -1,7 +1,7 @@
 Package: ccmap
 Type: Package
 Title: Combination Connectivity Mapping
-Version: 1.0.1
+Version: 1.1.2
 Author: Alex Pickering
 Maintainer: Alex Pickering <alexvpickering@gmail.com>
 Description: Finds drugs and drug combinations that are predicted to reverse or
@@ -25,7 +25,8 @@ Imports:
     data.table (>= 1.9.6),
     foreach (>= 1.4.3),
     parallel (>= 3.3.1),
-    xgboost (>= 0.4.4)
+    xgboost (>= 0.4.4),
+    lsa (>= 0.73.1)
 biocViews:
     GeneExpression,
     Transcription,

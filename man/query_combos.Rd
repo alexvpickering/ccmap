@@ -27,17 +27,11 @@ all two drug combinations will be predicted and queried.}
 to use all cores.}
 }
 \value{
-Vector of numeric values between 1 and -1 indicating extent of overlap
-  between query and drug combination signatures (see description).
+Vector of cosine similarities between query and drug combination signatures.
 }
 \description{
-Drugs with the largest positive and negative net overlap are predicted to,
-respectively, mimic and reverse the query signature. A value of 1 would indicate
-that all drug and query genes are regulated in the same direction and have the
-same order when sorted by absolute changes in differential expression. A value
-of -1 would indicate that all drug and query genes are regulated in the
-opposite direction and have the same order when sorted by absolute changes
-in differential expression.
+Drugs with the largest positive and negative cosine similarity are predicted to,
+respectively, mimic and reverse the query signature. Values range from +1 to -1.
 }
 \details{
 To predict and query all 856086 two-drug cmap combinations, the 'average'
@@ -47,7 +41,7 @@ requires ~10GB of RAM but is slightly more accurate. Both methods will run
 faster by specifying only a subset of drugs using the \code{include} parameter.
 To speed up the 'ml' method, the MRO+MKL distribution of R can help
 substantially (\href{https://mran.revolutionanalytics.com/open/}{link}).
-The combinations of LINCS l1000 signatures (~350 million) can also be queried
+The combinations of LINCS l1000 signatures (~26 billion) can also be queried
 using the 'average' \code{method}. In order to compare l1000 results to those
 obtained with cmap, only the same genes should be queried (see example).
 }
