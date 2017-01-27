@@ -17,6 +17,8 @@
 #'   values for drugs or drug combinations (rows are genes, columns are drugs).
 #' @param sorted Would you like the results sorted by decreasing similarity?
 #'   Default is TRUE.
+#' @param ngenes The number of top up- and down-regulated query genes (2*ngenes total)
+#'   to use. Default is 100.
 #'
 #' @seealso \code{\link{query_combos}} to get similarity between query and
 #'   predicted drug combination signatures.
@@ -64,7 +66,7 @@ query_drugs <- function(query_genes, drug_info = c('cmap', 'l1000'), sorted = TR
 
     # top 100 up/down genes
     query_genes <- sort(query_genes, TRUE)
-    query_genes <- c(head(query_genes, ngenes), tail(query_genes, ngenes))
+    query_genes <- c(utils::head(query_genes, ngenes), utils::tail(query_genes, ngenes))
     drug_info   <- drug_info[names(query_genes), ,drop = FALSE]
 
     # cosine similarity

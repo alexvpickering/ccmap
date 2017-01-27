@@ -4,7 +4,8 @@
 \alias{query_drugs}
 \title{Get overlap between query and drug signatures.}
 \usage{
-query_drugs(query_genes, drug_info = c("cmap", "l1000"), sorted = TRUE)
+query_drugs(query_genes, drug_info = c("cmap", "l1000"), sorted = TRUE,
+  ngenes = 100)
 }
 \arguments{
 \item{query_genes}{Named numeric vector of differentual expression values for
@@ -14,27 +15,23 @@ query genes. Usually 'meta' slot of \code{get_dprimes} result.}
 (either 'cmap' or 'l1000'). Can also provide a matrix of differential expression
 values for drugs or drug combinations (rows are genes, columns are drugs).}
 
-\item{sorted}{Would you like the results sorted in decreasing order of overlap?
+\item{sorted}{Would you like the results sorted by decreasing similarity?
 Default is TRUE.}
+
+\item{ngenes}{The number of top up- and down-regulated query genes (2*ngenes total)
+to use. Default is 100.}
 }
 \value{
-Vector of numeric values between 1 and -1 indicating extent of overlap
-  between query and drug signatures (see description).
+Vector of cosine similarities between query and drug combination signatures.
 }
 \description{
-Determines the volume under the surface formed by plotting net overlap (z)
-as a function of number of drug and query genes (x and y).
+Determines the cosine similarity between the query and each drug signature.
 }
 \details{
-Drugs with the largest positive and negative net overlap are predicted to,
-respectively, mimic and reverse the query signature. A value of 1 would indicate
-that all drug and query genes are regulated in the same direction and have the
-same order when sorted by absolute changes in differential expression. A value
-of -1 would indicate that all drug and query genes are regulated in the
-opposite direction and have the same order when sorted by absolute changes
-in differential expression.
+Drugs with the largest positive and negative cosine similarity are predicted to,
+respectively, mimic and reverse the query signature. Values range from +1 to -1.
 
-The 26303 LINCS l1000 signatures (drugs & genetic over/under expression) can also be queried.
+The 230829 LINCS l1000 signatures (drugs & genetic over/under expression) can also be queried.
 In order to compare l1000 results to those obtained with cmap, only the same genes should be
 included (see example).
 }
@@ -62,6 +59,6 @@ res <- query_drugs(query_sig, as.matrix(drug_info))
 # cmap_es <- cmap_es[row.names(l1000_es), ]
 }
 \seealso{
-\code{\link{query_combos}} to get overlap between query and
+\code{\link{query_combos}} to get similarity between query and
   predicted drug combination signatures.
 }
