@@ -75,7 +75,7 @@
 query_combos <- function(query_genes, drug_info = c('cmap', 'l1000'), method = c('average', 'ml'), include = NULL, ncores=parallel::detectCores()) {
 
     if (method[1] == 'ml' & drug_info[1] != 'cmap') {
-        stop("Machine learning method only available for 'cmap' dataset.")
+        stop("Machine learning method only available for drug_info = 'cmap'.")
     }
 
     if (class(drug_info) == 'character') {
@@ -86,18 +86,26 @@ query_combos <- function(query_genes, drug_info = c('cmap', 'l1000'), method = c
         rm(list = fname)
     }
 
+    # sending l1000_es to 8 cores requires ~30G free RAM
+    if (ncol(drug_info) > 10000)
+        ncores <- max(round(ncores/2), 1)
+
     drugs   <- colnames(drug_info)
     cpds    <- gsub('_.+?$', '', drugs)
-    include <- drugs[cpds %in% include]
 
-    # check 'include'
-    if (FALSE %in% (include %in% drugs)) {
+    # check 'include
+    if (FALSE %in% (include %in% drugs | include %in% cpds)) {
         message("Drugs in 'include' not found.")
         return(NULL)
     }
 
-    # query all combinations if include is NULL
-    if (is.null(include)) include <- drugs
+    if (!is.null(include)) {
+        # either specified dose_time or all cpds
+        include <- drugs[(cpds %in% include|drugs %in% include)]
+    } else {
+        # query all combinations if include is NULL
+        include <- drugs
+    }
 
     # use average model
     if (method[1] != "ml") {

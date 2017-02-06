@@ -1,7 +1,7 @@
 Package: ccmap
 Type: Package
 Title: Combination Connectivity Mapping
-Version: 1.1.2
+Version: 1.1.3
 Author: Alex Pickering
 Maintainer: Alex Pickering <alexvpickering@gmail.com>
 Description: Finds drugs and drug combinations that are predicted to reverse or
