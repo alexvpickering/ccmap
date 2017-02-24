@@ -46,6 +46,8 @@ get_dprimes <- function(es) {
         names(dprimes) <- row.names(es$raw)
         contrasts[[col]] <- dprimes[!is.na(dprimes)]
     }
+
+    names(contrasts) <- gsub('^dprime.', '', names(contrasts))
     return(list (meta=meta, contrasts=contrasts))
 }
 
