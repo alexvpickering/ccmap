@@ -35,21 +35,27 @@
 
 get_dprimes <- function(es) {
 
-    meta <- es$filt$mu
-    names(meta) <- row.names(es$filt)
 
-    contrasts <- list()
-    dp_cols <- grep("^dp", colnames(es$raw), value = TRUE)
+    get_dprimes_src <- function(es) {
+        meta <- es$filt$mu
+        names(meta) <- row.names(es$filt)
 
-    for (col in dp_cols){
-        dprimes <- es$raw[, col]
-        names(dprimes) <- row.names(es$raw)
-        contrasts[[col]] <- dprimes[!is.na(dprimes)]
+        contrasts <- list()
+        dp_cols <- grep("^dp", colnames(es$raw), value = TRUE)
+
+        for (col in dp_cols){
+            dprimes <- es$raw[, col]
+            names(dprimes) <- row.names(es$raw)
+            contrasts[[col]] <- dprimes[!is.na(dprimes)]
+        }
+
+        names(contrasts) <- gsub('^dprime.', '', names(contrasts))
+        return(list (meta=meta, contrasts=contrasts))
     }
 
-    names(contrasts) <- gsub('^dprime.', '', names(contrasts))
-    return(list (meta=meta, contrasts=contrasts))
+    return(lapply(es, get_dprimes_src))
 }
+
 
 
 #---------------

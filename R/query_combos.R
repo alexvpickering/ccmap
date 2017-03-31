@@ -118,7 +118,7 @@ query_combos <- function(query_genes, drug_info = c('cmap', 'l1000'), method = c
         exclude <- c()
         res <- c()
         i   <- 1
-        pb  <- utils::txtProgressBar(min=1, max=length(include), style=3)
+        pb  <- utils::txtProgressBar(min=0, max=length(include), style=3)
 
         for (drug in include) {
             combos_es <- predict_combos(drug, exclude, dat)

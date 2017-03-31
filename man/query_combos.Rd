@@ -85,4 +85,3 @@ top_met_combos <- query_combos(dprimes$meta, include = 'metformin', ncores = 1)
 # met_cmap  <- query_combos(dprimes$meta, cmap_es,  include = 'metformin')
 # met_l1000 <- query_combos(dprimes$meta, l1000_es, include = 'metformin')
 }
-

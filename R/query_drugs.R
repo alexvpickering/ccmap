@@ -7,7 +7,7 @@
 #'
 #' The 230829 LINCS l1000 signatures (drugs & genetic over/under expression) can also be queried.
 #' In order to compare l1000 results to those obtained with cmap, only the same genes should be
-#' included (see example).
+#' included (see second example).
 #'
 #' @import ccdata
 #' @param query_genes Named numeric vector of differentual expression values for
@@ -19,15 +19,51 @@
 #'   Default is TRUE.
 #' @param ngenes The number of top up- and down-regulated query genes (2*ngenes total)
 #'   to use. Default is 100.
+#' @param path Character vector specifying KEGG pathway. Used to find drugs that most
+#'   closely mimic or reverse query signature for specific pathway. If \code{NULL} (default),
+#'   then the entire query signature is used.
 #'
 #' @seealso \code{\link{query_combos}} to get similarity between query and
-#'   predicted drug combination signatures.
+#'   predicted drug combination signatures. \link[crossmeta]{diff_path} and \link[crossmeta]{path_meta}
+#'   to perform pathway meta-analysis.
 #'
 #' @return Vector of cosine similarities between query and drug combination signatures.
 #'
 #' @export
 #'
 #' @examples
+#'
+#' # Example 1 -----
+#'
+#' library(crossmeta)
+#' library(ccdata)
+#' library(lydata)
+#'
+#' data_dir <- system.file("extdata", package = "lydata")
+#' data(cmap_es)
+#'
+#' # gather GSE names
+#' gse_names  <- c("GSE9601", "GSE15069", "GSE50841", "GSE34817", "GSE29689")
+#'
+#' # load previous differential expression analysis
+#' anals <- load_diff(gse_names, data_dir)
+#'
+#' # run meta-analysis
+#' es <- es_meta(anals)
+#'
+#' # get meta-analysis effect size values
+#' dprimes <- get_dprimes(es)
+#'
+#' # most significant pathway (from path_meta)
+#' path <- 'Amino sugar and nucleotide sugar metabolism'
+#'
+#' # query using entire transcriptional profile
+#' topd <- query_drugs(dprimes$meta, cmap_es)
+#'
+#' # query restricted to transcriptional profile for above pathway
+#' topd_path <- query_drugs(dprimes$meta, cmap_es, path=path)
+#'
+#' # Example 2 -----
 #'
 #' # create drug signatures
 #' genes <- paste("GENE", 1:1000, sep = "_")
@@ -51,7 +87,11 @@
 #' # cmap_es <- cmap_es[row.names(l1000_es), ]
 
 
-query_drugs <- function(query_genes, drug_info = c('cmap', 'l1000'), sorted = TRUE, ngenes = 100) {
+query_drugs <- function(query_genes, drug_info = c('cmap', 'l1000'), sorted = TRUE, ngenes = 100, path = NULL) {
+
+
+    # bindings to pass check
+    gslist = gs.names = NULL
 
     # default to cmap_es for drug_info
     if (class(drug_info) == 'character') {
@@ -59,6 +99,17 @@ query_drugs <- function(query_genes, drug_info = c('cmap', 'l1000'), sorted = TR
         utils::data(list = fname, package = "ccdata", envir = environment())
         drug_info <- get(fname)
         rm(list = fname)
+    }
+
+    if (!is.null(path)) {
+        utils::data("gslist", "gs.names", package = "crossmeta", envir = environment())
+
+        # path symbols
+        path_num <- names(gs.names)[gs.names == path]
+        path_sym <- unique(names(gslist[[path_num]]))
+
+        # drug info with only path symbols
+        drug_info <- drug_info[row.names(drug_info) %in% path_sym, ]
     }
 
     # use only common genes

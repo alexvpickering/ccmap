@@ -1,7 +1,7 @@
 ---
 title: "Combination Connectivity Mapping"
 author: "Alex Pickering"
-date: "`r Sys.Date()`"
+date: "2017-03-21"
 output:
   html_document:
     theme: flatly
@@ -43,7 +43,8 @@ values where the names correspond to uppercase HGNC symbols. If you used
 `crossmeta`, proceeed as follows:
 
 
-```{r, message=FALSE, warning=FALSE}
+
+```r
 library(crossmeta)
 library(ccmap)
 
@@ -86,7 +87,8 @@ used by `GeneMeta` to calculate moderated unbiased standardised effect sizes.
 
 The final drug signatures are available in the `ccdata` package.
 
-```{r, message=FALSE, warning=FALSE}
+
+```r
 library(ccdata)
 
 # load drug signatures
@@ -97,7 +99,8 @@ LINCS l1000 signatures (drugs and genetic under/over expression) were generated 
 
 The final drug signatures are available in the `ccdata` package.
 
-```{r, message=FALSE, warning=FALSE}
+
+```r
 # load drug signatures
 data(l1000_es)
 ```
@@ -108,22 +111,38 @@ data(l1000_es)
 
 Cosine similarity is calculated between the query and drug signatures.
 
-```{r, message=FALSE, warning=FALSE}
+
+```r
 top_cmap  <- query_drugs(query_sig, cmap_es)
 top_l1000 <- query_drugs(query_sig, l1000_es)
 
 # LY-294002 best match among 1309 cmap signatures
 # other PI3K inhibitors are also identified among top matching drugs
 head(top_cmap, 4)
+```
 
+```
+## LY-294002 sirolimus   dilazep  benzamil 
+## 0.6808943 0.5427550 0.5292642 0.5073293
+```
+
+```r
 # LY-294002 matches 4 of top 10 l1000 signatures (230,829 total) 
 # other PI3K inhibitors are also identified among top matching drugs
 head(top_l1000, 4)
 ```
 
+```
+## KU-0063794_MCF7_10um_24h  TG-101348_MCF7_10um_24h LY-294002_NKDBA_10um_24h 
+##                0.6110260                0.6099857                0.6092298 
+##  LY-294002_MCF7_10um_24h 
+##                0.5994232
+```
+
 Note that only a subset of the cmap genes were measured in the l1000 signatures. As such, only common genes should be included if you wish to directly compare cmap and l1000 queries. To do this:
 
-```{r, message=FALSE, warning=FALSE}
+
+```r
 # remove genes in cmap_es that are not measured in l1000_es
 cmap_lm <- cmap_es[row.names(l1000_es), ]
 
@@ -150,7 +169,8 @@ predicted the direction of differential expression of the combined treatment
 with 78.96% accuracy. The average expression profiles for all 856086 unique 
 two-drug cmap combinations can be generated and queried as follows:
 
-```{r, message=FALSE, warning=FALSE}
+
+```r
 # query all 856086 combinations (takes ~2 minutes on Intel Core i7-6700)
 # top_combos <- query_combos(query_sig, cmap_es)
 
@@ -160,8 +180,8 @@ top_combos <- query_combos(query_sig, cmap_es, include='LY-294002', ncores=1)
 
 Combinations of l1000 signatures can also be queried using the average method. As ~26 billion two-perturbagen combinations are possible, queries should be limited to combinations with the top few perturbagens. For example:
 
-```{r, message=FALSE, warning=FALSE}
 
+```r
 # query only combinations with LY-294002_NKDBA_10um_24h
 top_combos <- query_combos(query_sig, l1000_es, include='LY-294002_NKDBA_10um_24h', ncores=1)
 
@@ -173,7 +193,8 @@ top_combos <- query_combos(query_sig, l1000_es, include='LY-294002_NKDBA_10um_24
 A small improvement to 80.18% acurracy was obtained using machine learning models.
 To use these models requires 8-10GB of RAM and about 2 hours (Intel Core i7-6700 with the [MRO+MKL](https://mran.revolutionanalytics.com/open/) distribution of R) to predict and query all 856086 unique two-drug cmap combinations. In practice, the drug combinations that most closely mimic or reverse a query signature usually include the top few single drugs. By only predicting drug combinations that include the top few single drugs, prediction times are greatly reduced:
 
-```{r, message=FALSE, warning=FALSE}
+
+```r
 # Times on Intel Core i7-6700 with MRO+MKL
 # requires ~8-10GB of RAM
 
@@ -187,4 +208,41 @@ include <- names(head(top_cmap))
 # top_combos <- query_combos(query_sig, 'cmap', method, include)
 
 sessionInfo()
+```
+
+```
+## R version 3.3.3 (2017-03-06)
+## Platform: x86_64-pc-linux-gnu (64-bit)
+## Running under: Ubuntu 16.04.2 LTS
+## 
+## locale:
+##  [1] LC_CTYPE=en_CA.UTF-8       LC_NUMERIC=C              
+##  [3] LC_TIME=en_CA.UTF-8        LC_COLLATE=C              
+##  [5] LC_MONETARY=en_CA.UTF-8    LC_MESSAGES=en_CA.UTF-8   
+##  [7] LC_PAPER=en_CA.UTF-8       LC_NAME=C                 
+##  [9] LC_ADDRESS=C               LC_TELEPHONE=C            
+## [11] LC_MEASUREMENT=en_CA.UTF-8 LC_IDENTIFICATION=C       
+## 
+## attached base packages:
+## [1] parallel  stats4    stats     graphics  grDevices utils     datasets 
+## [8] methods   base     
+## 
+## other attached packages:
+##  [1] limma_3.30.13        lydata_1.1.1         ccmap_1.1.3         
+##  [4] crossmeta_1.1.2      lsa_0.73.1           SnowballC_0.5.1     
+##  [7] xgboost_0.6-4        data.table_1.10.4    doParallel_1.0.10   
+## [10] iterators_1.0.8      foreach_1.4.3        ccdata_1.1.2        
+## [13] BiocInstaller_1.24.0 AnnotationDbi_1.36.2 IRanges_2.8.2       
+## [16] S4Vectors_0.12.2     Biobase_2.34.0       BiocGenerics_0.20.0 
+## 
+## loaded via a namespace (and not attached):
+##  [1] Rcpp_0.12.10     metaMA_3.1.2     compiler_3.3.3   tools_3.3.3     
+##  [5] digest_0.6.12    RSQLite_1.1-2    memoise_1.0.0    evaluate_0.10   
+##  [9] lattice_0.20-34  Matrix_1.2-8     shiny_1.0.0      DBI_0.6         
+## [13] commonmark_1.2   stringr_1.2.0    roxygen2_6.0.1   xml2_1.1.1      
+## [17] knitr_1.15.1     desc_1.1.0       rprojroot_1.2    grid_3.3.3      
+## [21] R6_2.2.0         fdrtool_1.2.15   SMVar_1.3.3      magrittr_1.5    
+## [25] htmltools_0.3.5  backports_1.0.5  codetools_0.2-15 assertthat_0.1  
+## [29] xtable_1.8-2     mime_0.5         httpuv_1.3.3     stringi_1.1.2   
+## [33] miniUI_0.1.1     crayon_1.3.2
 ```

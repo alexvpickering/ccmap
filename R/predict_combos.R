@@ -75,7 +75,7 @@ predict_combos <- function(include, exclude = NULL, dat = NULL) {
         Xgb[, 5] <- as.vector(cmap_var[, other_drugs])
 
         # xgboost predictions
-        combos_es <- xgboost::predict(xgb_mod, Xgb)
+        combos_es <- xgboost:::predict.xgb.Booster(xgb_mod, Xgb)
         rm(Xgb)
 
         # setup combos_es

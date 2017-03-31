@@ -29,4 +29,3 @@ j <- c(4, 1, 3, 2)  # col indices of x
 
 sum_rowcolCumsum(x, i, j)
 }
-
