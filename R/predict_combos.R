@@ -75,7 +75,7 @@ predict_combos <- function(include, exclude = NULL, dat = NULL) {
         Xgb[, 5] <- as.vector(cmap_var[, other_drugs])
 
         # xgboost predictions
-        combos_es <- xgboost::predict(xgb_mod, Xgb)
+        combos_es <- xgboost:::predict.xgb.Booster(xgb_mod, Xgb)
         rm(Xgb)
 
         # setup combos_es
@@ -112,7 +112,7 @@ predict_combos <- function(include, exclude = NULL, dat = NULL) {
 get_biocpack <- function(biocpack_name) {
 
     if (!requireNamespace(biocpack_name, quietly = TRUE)) {
-        BiocInstaller::biocLite(biocpack_name)
+        biocLite(biocpack_name)
     }
     db <- get(biocpack_name, getNamespace(biocpack_name))
     return (db)

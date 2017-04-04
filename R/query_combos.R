@@ -14,6 +14,7 @@
 #' using the 'average' \code{method}. In order to compare l1000 results to those
 #' obtained with cmap, only the same genes should be queried (see example).
 #'
+#' @import data.table ccdata AnnotationDbi BiocInstaller xgboost
 #' @importFrom foreach foreach %dopar%
 #'
 #' @param query_genes Named numeric vector of differentual expression values for
@@ -52,16 +53,16 @@
 #' dprimes <- get_dprimes(es)
 #'
 #' # query combinations of metformin and all other cmap drugs
-#' top_met_combos <- query_combos(dprimes$meta, include = 'metformin', ncores = 1)
+#' top_met_combos <- query_combos(dprimes$all$meta, include = 'metformin', ncores = 1)
 #'
 #' # previous query but with machine learning method
-#' # top_met_combos <- query_combos(dprimes$meta, method = 'ml', include = 'metformin')
+#' # top_met_combos <- query_combos(dprimes$all$meta, method = 'ml', include = 'metformin')
 #'
 #' # query all cmap drug combinations
-#' # top_combos <- query_combos(dprimes$meta)
+#' # top_combos <- query_combos(dprimes$all$meta)
 #'
 #' # query all cmap drug combinations with machine learning method
-#' # top_combos <- query_combos(dprimes$meta, method = 'ml')
+#' # top_combos <- query_combos(dprimes$all$meta, method = 'ml')
 #'
 #' # query l1000 and cmap using same genes
 #' # library(ccdata)
@@ -69,8 +70,8 @@
 #' # data(l1000_es)
 #' # cmap_es <- cmap_es[row.names(l1000_es), ]
 #'
-#' # met_cmap  <- query_combos(dprimes$meta, cmap_es,  include = 'metformin')
-#' # met_l1000 <- query_combos(dprimes$meta, l1000_es, include = 'metformin')
+#' # met_cmap  <- query_combos(dprimes$all$meta, cmap_es,  include = 'metformin')
+#' # met_l1000 <- query_combos(dprimes$all$meta, l1000_es, include = 'metformin')
 
 query_combos <- function(query_genes, drug_info = c('cmap', 'l1000'), method = c('average', 'ml'), include = NULL, ncores=parallel::detectCores()) {
 
@@ -118,7 +119,7 @@ query_combos <- function(query_genes, drug_info = c('cmap', 'l1000'), method = c
         exclude <- c()
         res <- c()
         i   <- 1
-        pb  <- utils::txtProgressBar(min=1, max=length(include), style=3)
+        pb  <- utils::txtProgressBar(min=0, max=length(include), style=3)
 
         for (drug in include) {
             combos_es <- predict_combos(drug, exclude, dat)

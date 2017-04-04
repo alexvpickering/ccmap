@@ -5,7 +5,7 @@
 \title{Get overlap between query and drug signatures.}
 \usage{
 query_drugs(query_genes, drug_info = c("cmap", "l1000"), sorted = TRUE,
-  ngenes = 100)
+  ngenes = 100, path = NULL)
 }
 \arguments{
 \item{query_genes}{Named numeric vector of differentual expression values for
@@ -20,6 +20,10 @@ Default is TRUE.}
 
 \item{ngenes}{The number of top up- and down-regulated query genes (2*ngenes total)
 to use. Default is 100.}
+
+\item{path}{Character vector specifying KEGG pathway. Used to find drugs that most
+closely mimic or reverse query signature for specific pathway. If \code{NULL} (default),
+then the entire query signature is used.}
 }
 \value{
 Vector of cosine similarities between query and drug combination signatures.
@@ -33,9 +37,41 @@ respectively, mimic and reverse the query signature. Values range from +1 to -1.
 
 The 230829 LINCS l1000 signatures (drugs & genetic over/under expression) can also be queried.
 In order to compare l1000 results to those obtained with cmap, only the same genes should be
-included (see example).
+included (see second example).
 }
 \examples{
+
+# Example 1 -----
+
+library(crossmeta)
+library(ccdata)
+library(lydata)
+
+data_dir <- system.file("extdata", package = "lydata")
+data(cmap_es)
+
+# gather GSE names
+gse_names  <- c("GSE9601", "GSE15069", "GSE50841", "GSE34817", "GSE29689")
+
+# load previous differential expression analysis
+anals <- load_diff(gse_names, data_dir)
+
+# run meta-analysis
+es <- es_meta(anals)
+
+# get meta-analysis effect size values
+dprimes <- get_dprimes(es)
+
+# most significant pathway (from path_meta)
+path <- 'Amino sugar and nucleotide sugar metabolism'
+
+# query using entire transcriptional profile
+topd <- query_drugs(dprimes$all$meta, cmap_es)
+
+# query restricted to transcriptional profile for above pathway
+topd_path <- query_drugs(dprimes$all$meta, cmap_es, path=path)
+
+# Example 2 -----
 
 # create drug signatures
 genes <- paste("GENE", 1:1000, sep = "_")
@@ -60,5 +96,6 @@ res <- query_drugs(query_sig, as.matrix(drug_info))
 }
 \seealso{
 \code{\link{query_combos}} to get similarity between query and
-  predicted drug combination signatures.
+  predicted drug combination signatures. \link[crossmeta]{diff_path} and \link[crossmeta]{path_meta}
+  to perform pathway meta-analysis.
 }

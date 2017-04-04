@@ -44,4 +44,3 @@ dprimes <- get_dprimes(es)
 \seealso{
 \code{\link[crossmeta]{es_meta}}.
 }
-
