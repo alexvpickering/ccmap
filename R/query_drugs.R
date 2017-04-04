@@ -58,10 +58,10 @@
 #' path <- 'Amino sugar and nucleotide sugar metabolism'
 #'
 #' # query using entire transcriptional profile
-#' topd <- query_drugs(dprimes$meta, cmap_es)
+#' topd <- query_drugs(dprimes$all$meta, cmap_es)
 #'
 #' # query restricted to transcriptional profile for above pathway
-#' topd_path <- query_drugs(dprimes$meta, cmap_es, path=path)
+#' topd_path <- query_drugs(dprimes$all$meta, cmap_es, path=path)
 #'
 #' # Example 2 -----
 #'

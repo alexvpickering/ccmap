@@ -67,7 +67,7 @@ es <- es_meta(anals)
 dprimes <- get_dprimes(es)
 
 # query signature
-query_sig <- dprimes$meta
+query_sig <- dprimes$all$meta
 ```
 
 -----------------

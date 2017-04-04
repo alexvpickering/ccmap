@@ -65,16 +65,16 @@ es <- es_meta(anals)
 dprimes <- get_dprimes(es)
 
 # query combinations of metformin and all other cmap drugs
-top_met_combos <- query_combos(dprimes$meta, include = 'metformin', ncores = 1)
+top_met_combos <- query_combos(dprimes$all$meta, include = 'metformin', ncores = 1)
 
 # previous query but with machine learning method
-# top_met_combos <- query_combos(dprimes$meta, method = 'ml', include = 'metformin')
+# top_met_combos <- query_combos(dprimes$all$meta, method = 'ml', include = 'metformin')
 
 # query all cmap drug combinations
-# top_combos <- query_combos(dprimes$meta)
+# top_combos <- query_combos(dprimes$all$meta)
 
 # query all cmap drug combinations with machine learning method
-# top_combos <- query_combos(dprimes$meta, method = 'ml')
+# top_combos <- query_combos(dprimes$all$meta, method = 'ml')
 
 # query l1000 and cmap using same genes
 # library(ccdata)
@@ -82,6 +82,6 @@ top_met_combos <- query_combos(dprimes$meta, include = 'metformin', ncores = 1)
 # data(l1000_es)
 # cmap_es <- cmap_es[row.names(l1000_es), ]
 
-# met_cmap  <- query_combos(dprimes$meta, cmap_es,  include = 'metformin')
-# met_l1000 <- query_combos(dprimes$meta, l1000_es, include = 'metformin')
+# met_cmap  <- query_combos(dprimes$all$meta, cmap_es,  include = 'metformin')
+# met_l1000 <- query_combos(dprimes$all$meta, l1000_es, include = 'metformin')
 }
