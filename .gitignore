@@ -1,16 +1,9 @@
 .RData
 .Rhistory
 ccmap.Rproj
+seafile-ignore.txt
+vignettes/*.html
+vignettes/*.R
 
-.rds
-.ro
-.txt
-.ods
-.cys
-.CEL
-.xls
-.csv
-.zip
-.root
+
 .Rproj.user
-inst/doc

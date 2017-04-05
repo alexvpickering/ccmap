@@ -5,7 +5,7 @@
 \title{Get overlap between query and drug signatures.}
 \usage{
 query_drugs(query_genes, drug_info = c("cmap", "l1000"), sorted = TRUE,
-  ngenes = 100, path = NULL)
+  ngenes = 200, path = NULL)
 }
 \arguments{
 \item{query_genes}{Named numeric vector of differentual expression values for
@@ -18,12 +18,12 @@ values for drugs or drug combinations (rows are genes, columns are drugs).}
 \item{sorted}{Would you like the results sorted by decreasing similarity?
 Default is TRUE.}
 
-\item{ngenes}{The number of top up- and down-regulated query genes (2*ngenes total)
-to use. Default is 100.}
+\item{ngenes}{The number of top differentially-regulated (up and down) query genes
+to use if \code{path} is NULL. If \code{path} is not NULL, \code{ngenes} is the larger
+of 15 or the number of pathway genes with absolute dprimes > 2.}
 
 \item{path}{Character vector specifying KEGG pathway. Used to find drugs that most
-closely mimic or reverse query signature for specific pathway. If \code{NULL} (default),
-then the entire query signature is used.}
+closely mimic or reverse query signature for specific pathway.}
 }
 \value{
 Vector of cosine similarities between query and drug combination signatures.

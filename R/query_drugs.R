@@ -17,11 +17,11 @@
 #'   values for drugs or drug combinations (rows are genes, columns are drugs).
 #' @param sorted Would you like the results sorted by decreasing similarity?
 #'   Default is TRUE.
-#' @param ngenes The number of top up- and down-regulated query genes (2*ngenes total)
-#'   to use. Default is 100.
+#' @param ngenes The number of top differentially-regulated (up and down) query genes
+#'   to use if \code{path} is NULL. If \code{path} is not NULL, \code{ngenes} is the larger
+#'   of 15 or the number of pathway genes with absolute dprimes > 2.
 #' @param path Character vector specifying KEGG pathway. Used to find drugs that most
-#'   closely mimic or reverse query signature for specific pathway. If \code{NULL} (default),
-#'   then the entire query signature is used.
+#'   closely mimic or reverse query signature for specific pathway.
 #'
 #' @seealso \code{\link{query_combos}} to get similarity between query and
 #'   predicted drug combination signatures. \link[crossmeta]{diff_path} and \link[crossmeta]{path_meta}
@@ -87,7 +87,7 @@
 #' # cmap_es <- cmap_es[row.names(l1000_es), ]
 
 
-query_drugs <- function(query_genes, drug_info = c('cmap', 'l1000'), sorted = TRUE, ngenes = 100, path = NULL) {
+query_drugs <- function(query_genes, drug_info = c('cmap', 'l1000'), sorted = TRUE, ngenes = 200, path = NULL) {
 
 
     # bindings to pass check
@@ -115,9 +115,12 @@ query_drugs <- function(query_genes, drug_info = c('cmap', 'l1000'), sorted = TR
     # use only common genes
     query_genes <- query_genes[names(query_genes) %in% row.names(drug_info)]
 
-    # top 100 up/down genes
-    query_genes <- sort(query_genes, TRUE)
-    query_genes <- c(utils::head(query_genes, ngenes), utils::tail(query_genes, ngenes))
+    if (!is.null(path))
+        ngenes <- max(15, sum(abs(query_genes) > 2))
+
+    # top up/down ngenes
+    top_ngenes  <- utils::head(names(sort(abs(query_genes), TRUE)), ngenes)
+    query_genes <- query_genes[top_ngenes]
     drug_info   <- drug_info[names(query_genes), ,drop = FALSE]
 
     # cosine similarity
