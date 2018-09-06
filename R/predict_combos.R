@@ -7,7 +7,7 @@
 # a query signature can usually be determined by querying against drug
 # combination signatures predicted with the top few single drugs.
 #
-# @import data.table ccdata AnnotationDbi BiocInstaller xgboost
+# @import data.table ccdata AnnotationDbi xgboost
 # @param include Character vector of drug names to combine cmap drugs with.
 # @param exclude Character vector of drug names to not combine with include.
 # @param dat List with data for machine learning model. If NULL (default), will
