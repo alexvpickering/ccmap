@@ -1,8 +1,8 @@
-#' Get overlap between query and drug signatures.
+#' Get correlation between query and drug signatures.
 #'
-#' Determines the cosine similarity between the query and each drug signature.
+#' Determines the pearson correlation between the query and each drug signature.
 #'
-#' Drugs with the largest positive and negative cosine similarity are predicted to,
+#' Drugs with the largest positive and negative pearson correlation are predicted to,
 #' respectively, mimic and reverse the query signature. Values range from +1 to -1.
 #'
 #' The 230829 LINCS l1000 signatures (drugs & genetic over/under expression) can also be queried.
@@ -27,7 +27,7 @@
 #'   predicted drug combination signatures. \link[crossmeta]{diff_path} and \link[crossmeta]{path_meta}
 #'   to perform pathway meta-analysis.
 #'
-#' @return Vector of cosine similarities between query and drug combination signatures.
+#' @return Vector of pearson correlations between query and drug combination signatures.
 #'
 #' @export
 #'
@@ -123,8 +123,9 @@ query_drugs <- function(query_genes, drug_info = c('cmap', 'l1000'), sorted = TR
     query_genes <- query_genes[top_ngenes]
     drug_info   <- drug_info[names(query_genes), ,drop = FALSE]
 
-    # cosine similarity
-    sim <- apply(drug_info, 2, lsa::cosine, query_genes)
+    # pearson correlation
+    sim <- stats::cor(query_genes, drug_info, method="pearson")
+    sim <- structure(c(sim), names=colnames(sim))
 
     if (sorted) {
         return(sort(sim, decreasing = TRUE))
