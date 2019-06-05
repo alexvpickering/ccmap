@@ -115,9 +115,6 @@ query_drugs <- function(query_genes, drug_info = c('cmap', 'l1000'), sorted = TR
     # use only common genes
     query_genes <- query_genes[names(query_genes) %in% row.names(drug_info)]
 
-    if (!is.null(path))
-        ngenes <- max(15, sum(abs(query_genes) > 2))
-
     # top up/down ngenes
     top_ngenes  <- utils::head(names(sort(abs(query_genes), TRUE)), ngenes)
     query_genes <- query_genes[top_ngenes]
