@@ -2,11 +2,10 @@
 % Please edit documentation in R/query_drugs.R
 \name{query_drugs}
 \alias{query_drugs}
-<<<<<<< HEAD
-\title{Get correlation between query and drug signatures.}
-=======
-\title{Get overlap between query and drug signatures.}
->>>>>>> upstream/master
+\title{Get correlation between query and drug signatures.
+Determines the pearson correlation between the query and each drug signature.
+Drugs with the largest positive and negative pearson correlation are predicted to,
+respectively, mimic and reverse the query signature. Values range from +1 to -1.}
 \usage{
 query_drugs(query_genes, drug_info = c("cmap", "l1000"), sorted = TRUE,
   ngenes = 200, path = NULL)
@@ -30,25 +29,9 @@ of 15 or the number of pathway genes with absolute dprimes > 2.}
 closely mimic or reverse query signature for specific pathway.}
 }
 \value{
-<<<<<<< HEAD
 Vector of pearson correlations between query and drug combination signatures.
 }
 \description{
-Determines the pearson correlation between the query and each drug signature.
-}
-\details{
-Drugs with the largest positive and negative pearson correlation are predicted to,
-=======
-Vector of cosine similarities between query and drug combination signatures.
-}
-\description{
-Determines the cosine similarity between the query and each drug signature.
-}
-\details{
-Drugs with the largest positive and negative cosine similarity are predicted to,
->>>>>>> upstream/master
-respectively, mimic and reverse the query signature. Values range from +1 to -1.
-
 The 230829 LINCS l1000 signatures (drugs & genetic over/under expression) can also be queried.
 In order to compare l1000 results to those obtained with cmap, only the same genes should be
 included (see second example).
