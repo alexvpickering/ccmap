@@ -1,7 +1,5 @@
 #' Get correlation between query and drug signatures.
-#'
 #' Determines the pearson correlation between the query and each drug signature.
-#'
 #' Drugs with the largest positive and negative pearson correlation are predicted to,
 #' respectively, mimic and reverse the query signature. Values range from +1 to -1.
 #'
