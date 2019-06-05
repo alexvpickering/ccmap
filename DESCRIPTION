@@ -1,7 +1,7 @@
 Package: ccmap
 Type: Package
 Title: Combination Connectivity Mapping
-Version: 1.1.5
+Version: 1.1.6
 Author: Alex Pickering
 Maintainer: Alex Pickering <alexvpickering@gmail.com>
 Description: Finds drugs and drug combinations that are predicted to reverse or
@@ -9,7 +9,7 @@ Description: Finds drugs and drug combinations that are predicted to reverse or
      healthy lifestyles.
 License: MIT + file LICENSE
 LazyData: TRUE
-RoxygenNote: 6.0.1
+RoxygenNote: 6.1.1
 VignetteBuilder: knitr
 Suggests:
     crossmeta,
@@ -19,7 +19,6 @@ Suggests:
     lydata
 Imports:
     AnnotationDbi (>= 1.36.2),
-    BiocInstaller (>= 1.24.0),
     ccdata (>= 1.1.2),
     doParallel (>= 1.0.10),
     data.table (>= 1.10.4),

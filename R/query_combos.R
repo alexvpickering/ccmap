@@ -14,7 +14,7 @@
 #' using the 'average' \code{method}. In order to compare l1000 results to those
 #' obtained with cmap, only the same genes should be queried (see example).
 #'
-#' @import data.table ccdata AnnotationDbi BiocInstaller xgboost
+#' @import data.table ccdata AnnotationDbi xgboost
 #' @importFrom foreach foreach %dopar%
 #'
 #' @param query_genes Named numeric vector of differentual expression values for
