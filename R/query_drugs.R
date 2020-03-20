@@ -92,7 +92,7 @@ query_drugs <- function(query_genes, drug_info = c('cmap', 'l1000'), sorted = TR
     gslist = gs.names = NULL
 
     # default to cmap_es for drug_info
-    if (class(drug_info) == 'character') {
+    if (is.character(drug_info)) {
         fname <- paste0(drug_info[1], '_es')
         utils::data(list = fname, package = "ccdata", envir = environment())
         drug_info <- get(fname)

@@ -1,4 +1,4 @@
-##Combination Connectivity Mapping
+## Combination Connectivity Mapping
 
 `ccmap` finds drugs and drug combinations that are predicted to reverse or
 mimic gene expression signatures. These drugs might reverse diseases or mimic 

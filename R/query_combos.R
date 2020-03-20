@@ -79,7 +79,7 @@ query_combos <- function(query_genes, drug_info = c('cmap', 'l1000'), method = c
         stop("Machine learning method only available for drug_info = 'cmap'.")
     }
 
-    if (class(drug_info) == 'character') {
+    if (is.character(drug_info)) {
         # default to cmap_es for drug_info
         fname <- paste0(drug_info[1], '_es')
         utils::data(list = fname, package = "ccdata", envir = environment())
